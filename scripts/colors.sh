@@ -1,11 +1,17 @@
 #!/bin/bash
 
+function fg_default() {
+    echo -ne "\033[0;39m"
+}
+
 function fg_black() {
-    echo -ne "\033[0;30m"
+    # echo -ne "\033[0;30m"
+    echo -ne "\033[0;32m"
 }
 
 function fg_blue() {
-    echo -ne "\033[0;34m"
+    # echo -ne "\033[0;34m"
+    echo -ne "\033[0;36m"
 }
 
 function fg_green() {
