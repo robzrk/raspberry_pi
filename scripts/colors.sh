@@ -69,7 +69,7 @@ function fg_white() {
 }
 
 function fg_random() {
-    local RAND_VAL=$(( RANDOM % 14 ))
+    local RAND_VAL=$(( RANDOM % 16 ))
     case $RAND_VAL in
 	0)
 	    fg_green

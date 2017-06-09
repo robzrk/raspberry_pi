@@ -1,0 +1,32 @@
+### BEGIN INIT INFO
+# Provides: PI GUI
+# Required-Start: $remote_fs $syslog
+# Required-Stop: $remote_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Baby-step GUI
+# Description: date / time / ip address
+### END INIT INFO
+ 
+ 
+#! /bin/sh
+# /etc/init.d/pi_gui_startup
+ 
+ 
+export HOME
+case "$1" in
+    start)
+        echo "Starting PI GUI"
+        terminator -fbe /home/pi/raspberry_pi/scripts/pi_gui.sh
+    ;;
+    stop)
+        echo "Stopping PI GUI"
+	GUI_PID=`ps auxwww | grep pi_gui.sh | head -1 | awk '{print $2}'`
+	kill -9 $GUI_PID
+    ;;
+    *)
+        echo "Usage: /etc/init.d/pi_gui_startup {start|stop}"
+        exit 1
+    ;;
+esac
+exit 0

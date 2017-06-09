@@ -1,15 +1,31 @@
 #!/bin/bash
-COUNT=0
-SCRIPTS_DIR=~/raspberry_pi/scripts
 
+#DEBUG
+#set -x
+
+SCRIPTS_DIR=~/raspberry_pi/scripts
 source $SCRIPTS_DIR/colors.sh
 source $SCRIPTS_DIR/cursor_manipulation.sh
 
 trap ctrl_c INT
 
+# Emacs terminal
+# function get_height() {
+#     echo $LINES
+# }
+# function get_width() {
+#     echo $COLUMNS
+# }
+function get_height() {
+    tput lines
+}
+function get_width() {
+    tput cols
+}
+
 function ctrl_c() {
     fg_default
-    cm_move_cursor_to_point $LINES 0
+    cm_move_cursor_to_point $HEIGHT 0
     exit 0
 }
 
@@ -24,29 +40,29 @@ function run_pass() {
 
 function clear_specified_line_keep_border() {
     local L=$1
-    fg_purple
+    fg_light_purple
     cm_clear_specified_line $L 0
     cm_move_cursor_to_point $L 0
     echo -n "*"
-    cm_move_cursor_to_point $L $COLUMNS
+    cm_move_cursor_to_point $L $WIDTH
     echo -n "*"
 }
 
 function draw_border() {
-    fg_purple
+    fg_light_purple
     cm_move_cursor_to_point 0 0
     cm_clear_screen
-    LINE=1
-    while [ $LINE -lt $LINES ]; do
-	if [ $LINE -eq 1 -o $LINE -eq $((LINES-1)) ]; then
-	    COL=1
-	    while [ $COL -le $COLUMNS ]; do
+    local LINE=1
+    while [ $LINE -lt $HEIGHT ]; do
+	if [ $LINE -eq 1 -o $LINE -eq $((HEIGHT-1)) ]; then
+	    local COL=1
+	    while [ $COL -le $WIDTH ]; do
 	    	echo -n "*"
 		COL=$(( COL + 1 ))
 	    done
 	else
 	    echo -n "*"
-	    cm_move_cursor_to_point $LINE $COLUMNS
+	    cm_move_cursor_to_point $LINE $WIDTH
 	    echo -n "*"
 	fi
 	echo ""
@@ -55,8 +71,8 @@ function draw_border() {
 }
 
 function spin_one_second() {
-    cm_move_cursor_to_point $((LINES-3)) $((COLUMNS-3))
-    fg_blue
+    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-3))
+    fg_yellow
     local SLEEP_DUR=0.125
     for j in {1..2}; do
 	echo -ne "\b-"
@@ -81,27 +97,38 @@ function update_weather() {
 }
 
 function dump_basic_weather() {
-    TEMP=`extract_xml_data "$WEATHER" temp_f`
-    STRING=`extract_xml_data "$WEATHER" weather`
-    WIND_DIR=`extract_xml_data "$WEATHER" wind_dir`
-    WIND_MPH=`extract_xml_data "$WEATHER" wind_mph`
-    HUMIDITY=`extract_xml_data "$WEATHER" relative_humidity`
-    clear_specified_line_keep_border 2
-    cm_move_cursor_to_point 2 3
+    local TEMP=`extract_xml_data "$WEATHER" temp_f`
+    local STRING=`extract_xml_data "$WEATHER" weather`
+    local WIND_DIR=`extract_xml_data "$WEATHER" wind_dir`
+    local WIND_MPH=`extract_xml_data "$WEATHER" wind_mph`
+    local HUMIDITY=`extract_xml_data "$WEATHER" relative_humidity`
+    local DISPLAY_LINE=2
+    local DISPLAY_COL=3
+    clear_specified_line_keep_border $DISPLAY_LINE
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "$STRING. "
+    echo -n "$STRING."
+    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    clear_specified_line_keep_border $DISPLAY_LINE
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "${TEMP}ºF. "
+    echo -n "${TEMP}ºF."
+    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    clear_specified_line_keep_border $DISPLAY_LINE
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "Wind: $WIND_DIR @ ${WIND_MPH}MPH "
+    echo -n "Wind: $WIND_DIR @ ${WIND_MPH}MPH"
+    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    clear_specified_line_keep_border $DISPLAY_LINE
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo "Humidity: ${HUMIDITY}%"
+    echo -n "Humidity: ${HUMIDITY}%"
 }
 
 function dump_date() {
-    DATE=`date`
-    clear_specified_line_keep_border $((LINES-3))
-    cm_move_cursor_to_point $((LINES-3)) 3
+    local DATE=`date`
+    clear_specified_line_keep_border $((HEIGHT-3))
+    cm_move_cursor_to_point $((HEIGHT-3)) 3
     fg_cyan
     echo -n "$DATE"
 }
@@ -112,6 +139,11 @@ function run_loop() {
     	run_pass
     done
 }
+
+# Globals
+COUNT=0
+HEIGHT=`get_height`
+WIDTH=`get_width`
 
 ################################################################################
 ## Main

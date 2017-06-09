@@ -1,0 +1,2 @@
+# To start this script, run the following:
+terminator -fbe /home/pi/raspberry_pi/scripts/pi_gui.sh
