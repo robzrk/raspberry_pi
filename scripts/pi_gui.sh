@@ -16,7 +16,10 @@ function ctrl_c() {
 function run_pass() {
     update_weather
     dump_basic_weather
-    countdown_to_next_iter
+    for i in {1..5}; do
+	dump_date
+	spin_one_second
+    done
 }
 
 function clear_specified_line_keep_border() {
@@ -51,11 +54,11 @@ function draw_border() {
     done
 }
 
-function countdown_to_next_iter() {
-    fg_random
+function spin_one_second() {
     cm_move_cursor_to_point $((LINES-3)) $((COLUMNS-3))
-    local SLEEP_DUR=0.2
-    for i in {1..5}; do
+    fg_blue
+    local SLEEP_DUR=0.125
+    for j in {1..2}; do
 	echo -ne "\b-"
 	sleep $SLEEP_DUR
 	echo -ne "\b\\"
@@ -93,6 +96,14 @@ function dump_basic_weather() {
     echo -n "Wind: $WIND_DIR @ ${WIND_MPH}MPH "
     fg_random
     echo "Humidity: ${HUMIDITY}%"
+}
+
+function dump_date() {
+    DATE=`date`
+    clear_specified_line_keep_border $((LINES-3))
+    cm_move_cursor_to_point $((LINES-3)) 3
+    fg_cyan
+    echo -n "$DATE"
 }
 
 function run_loop() {

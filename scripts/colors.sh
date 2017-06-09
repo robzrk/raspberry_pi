@@ -5,13 +5,11 @@ function fg_default() {
 }
 
 function fg_black() {
-    # echo -ne "\033[0;30m"
-    echo -ne "\033[0;32m"
+    echo -ne "\033[0;30m"
 }
 
 function fg_blue() {
-    # echo -ne "\033[0;34m"
-    echo -ne "\033[0;36m"
+    echo -ne "\033[0;34m"
 }
 
 function fg_green() {
@@ -100,7 +98,8 @@ function fg_random() {
 	    fg_light_gray
 	    ;;
 	8)
-	    fg_dark_gray
+	    fg_light_gray
+	    # fg_dark_gray
 	    ;;
 	9)
 	    fg_light_blue
