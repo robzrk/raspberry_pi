@@ -17,10 +17,12 @@ trap ctrl_c INT
 #     echo $COLUMNS
 # }
 function get_height() {
-    tput lines
+    # tput lines
+    echo 19
 }
 function get_width() {
-    tput cols
+    # tput cols
+    echo 58
 }
 
 function ctrl_c() {
