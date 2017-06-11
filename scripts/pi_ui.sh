@@ -128,7 +128,7 @@ function dump_basic_weather() {
 }
 
 function dump_date() {
-    local DATE=`date`
+    local DATE=`TZ='America/Chicago' date +"%A %b %d %l:%M:%S"`
     clear_specified_line_keep_border $((HEIGHT-3))
     cm_move_cursor_to_point $((HEIGHT-3)) 3
     fg_cyan
