@@ -4,8 +4,9 @@
 #set -x
 
 SCRIPTS_DIR=~/raspberry_pi/scripts
-source $SCRIPTS_DIR/colors.sh
 source $SCRIPTS_DIR/cursor_manipulation.sh
+source $SCRIPTS_DIR/colors.sh
+source $SCRIPTS_DIR/numbers.sh
 
 trap ctrl_c INT
 
@@ -18,11 +19,13 @@ trap ctrl_c INT
 # }
 function get_height() {
     # tput lines
-    echo 19
+#     echo 19
+    echo 30
 }
 function get_width() {
     # tput cols
-    echo 58
+#     echo 58
+    echo 36
 }
 
 function ctrl_c() {
@@ -34,7 +37,7 @@ function ctrl_c() {
 function run_pass() {
     update_weather
     dump_basic_weather
-    for i in {1..5}; do
+    for i in {1..15}; do
 	dump_date
 	spin_one_second
     done
@@ -96,10 +99,12 @@ function extract_xml_data() {
 
 function update_weather() {
     WEATHER=`curl http://w1.weather.gov/xml/current_obs/KMSP.xml 2>/dev/null`
+    # FORECAST=`curl "http://api.openweathermap.org/data/2.5/forecast?id=5037649&mode=xml&APPID=94bd78ff32b4f3ff159847bc6f2d744a" 2>/dev/null`
 }
 
 function dump_basic_weather() {
     local TEMP=`extract_xml_data "$WEATHER" temp_f`
+    TEMP=`echo $TEMP | sed "s/\([0-9]*\).*/\1/g"`
     local STRING=`extract_xml_data "$WEATHER" weather`
     local WIND_DIR=`extract_xml_data "$WEATHER" wind_dir`
     local WIND_MPH=`extract_xml_data "$WEATHER" wind_mph`
@@ -114,18 +119,23 @@ function dump_basic_weather() {
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "${TEMP}ºF."
-    DISPLAY_LINE=$((DISPLAY_LINE+2))
-    clear_specified_line_keep_border $DISPLAY_LINE
-    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    fg_random
     echo -n "Wind: $WIND_DIR @ ${WIND_MPH}MPH"
     DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
     echo -n "Humidity: ${HUMIDITY}%"
+    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    clear_specified_line_keep_border $DISPLAY_LINE
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+    fg_random
+    echo -n "${TEMP}ºF"
+    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    fg_random
+    print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
 }
+
 
 function dump_date() {
     local DATE=`TZ='America/Chicago' date +"%A %b %d %l:%M:%S"`
@@ -137,6 +147,7 @@ function dump_date() {
 
 function run_loop() {
     draw_border
+    xdotool mousemove 0 0
     while [ 1 ]; do
     	run_pass
     done
@@ -150,5 +161,4 @@ WIDTH=`get_width`
 ################################################################################
 ## Main
 ################################################################################
-
 run_loop

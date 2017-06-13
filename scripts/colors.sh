@@ -1,4 +1,5 @@
 #!/bin/bash
+#set -x
 
 function fg_default() {
     echo -ne "\033[0;39m"
