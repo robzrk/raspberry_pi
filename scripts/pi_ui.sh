@@ -37,6 +37,8 @@ function ctrl_c() {
 function run_pass() {
     update_weather
     dump_basic_weather
+    # dump_basic_forecast
+    # exit 0
     for i in {1..15}; do
 	dump_date
 	spin_one_second
@@ -91,24 +93,41 @@ function spin_one_second() {
     done
 }
 
-function extract_xml_data() {
+function extract_xml_weather() {
     local XML=$1
     local TAG=$2
     echo "$XML" | grep "<$TAG>" | sed "s/.*<$TAG>\(.*\)<\/$TAG>.*/\1/"
 }
 
+function extract_xml_forecast() {
+    local XML=$1
+    local TAG=$2
+    local FIELD=$3
+    local TOKENIZED_XML=`echo $XML | sed "s/${TAG}/_/g"`
+    (
+	IFS='_'; 
+	for TOK in $TOKENIZED_XML; do
+	    echo "$TOK" | sed "s/.*${FIELD}=\"\(.*\)\".*/\1/"
+	done
+    )
+}
+
 function update_weather() {
     WEATHER=`curl http://w1.weather.gov/xml/current_obs/KMSP.xml 2>/dev/null`
-    # FORECAST=`curl "http://api.openweathermap.org/data/2.5/forecast?id=5037649&mode=xml&APPID=94bd78ff32b4f3ff159847bc6f2d744a" 2>/dev/null`
+    #echo $WEATHER > weather.xml
+    # WEATHER=`cat weather.xml`
+    #FORECAST=`curl "http://api.openweathermap.org/data/2.5/forecast?id=5037649&mode=xml&APPID=94bd78ff32b4f3ff159847bc6f2d744a" 2>/dev/null`
+    #echo $FORECAST > forecast.xml
+    # FORECAST=`cat forecast.xml`
 }
 
 function dump_basic_weather() {
-    local TEMP=`extract_xml_data "$WEATHER" temp_f`
-    TEMP=`echo $TEMP | sed "s/\([0-9]*\).*/\1/g"`
-    local STRING=`extract_xml_data "$WEATHER" weather`
-    local WIND_DIR=`extract_xml_data "$WEATHER" wind_dir`
-    local WIND_MPH=`extract_xml_data "$WEATHER" wind_mph`
-    local HUMIDITY=`extract_xml_data "$WEATHER" relative_humidity`
+    local TEMP=`extract_xml_weather "$WEATHER" temp_f`
+    #TEMP=`echo $TEMP | sed "s/\([0-9]*\).*/\1/g"`
+    local STRING=`extract_xml_weather "$WEATHER" weather`
+    local WIND_DIR=`extract_xml_weather "$WEATHER" wind_dir`
+    local WIND_MPH=`extract_xml_weather "$WEATHER" wind_mph`
+    local HUMIDITY=`extract_xml_weather "$WEATHER" relative_humidity`
     local DISPLAY_LINE=2
     local DISPLAY_COL=3
     clear_specified_line_keep_border $DISPLAY_LINE
@@ -134,6 +153,16 @@ function dump_basic_weather() {
     DISPLAY_LINE=$((DISPLAY_LINE+2))
     fg_random
     print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
+}
+
+function dump_basic_forecast() {
+    local TEMP=`extract_xml_forecast "$FORECAST" time from`
+    local DISPLAY_LINE=2
+    local DISPLAY_COL=3
+    # clear_specified_line_keep_border $DISPLAY_LINE
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+    # fg_random
+    echo -n "${TEMP}"
 }
 
 

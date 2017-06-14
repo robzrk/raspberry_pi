@@ -194,38 +194,38 @@ function large_dot(){
     local L=$1
     local C=$2
     cm_move_cursor_to_point $L $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+1)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+2)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+3)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+4)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+5)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+6)) $C
-    echo -n "   o    "
+    echo -n "o "
 }
 
 function large_dash(){
     local L=$1
     local C=$2
     cm_move_cursor_to_point $L $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+1)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+2)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+3)) $C
-    echo -n " ------ "
+    echo -n "--"
     cm_move_cursor_to_point $((L+4)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+5)) $C
-    echo -n "        "
+    echo -n "  "
     cm_move_cursor_to_point $((L+6)) $C
-    echo -n "        "
+    echo -n "  "
 }
 
 function print_large_digit() {
@@ -281,7 +281,7 @@ function print_large_number() {
     local PLN_LINE=$2
     local PLN_COL=$3
 
-    if [ "$NUMBER" == "" ]; then
+    if [ "$NUMBER" == "" -o "$PLN_LINE" == "" -o "$PLN_COL" == "" ]; then
 	return
     fi
 
@@ -289,9 +289,12 @@ function print_large_number() {
     local PRINT_DIGIT=`echo ${NUMBER:$DIGIT:$((DIGIT+1))}`
     while [ "$PRINT_DIGIT" != "" ]; do
 	print_large_digit $PRINT_DIGIT $PLN_LINE $PLN_COL
-	# echo $PRINT_DIGIT
 	PLN_DIGIT=$((PLN_DIGIT+1))
-	PLN_COL=$((PLN_COL+10))
-	PRINT_DIGIT=`echo ${NUMBER:$PLN_DIGIT:$((PLN_DIGIT+1))}`
+	if [ "$PRINT_DIGIT" == "." -o "$PRINT_DIGIT" == "-" ]; then
+	    PLN_COL=$((PLN_COL+3))
+	else
+	    PLN_COL=$((PLN_COL+9))
+	fi
+	PRINT_DIGIT=`echo ${NUMBER:$PLN_DIGIT:1}`
     done
 }
