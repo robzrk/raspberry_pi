@@ -39,10 +39,10 @@ function run_pass() {
     dump_basic_weather
     # dump_basic_forecast
     # exit 0
-    for i in {1..15}; do
+   for i in {1..15}; do
 	dump_date
 	spin_one_second
-    done
+   done
 }
 
 function clear_specified_line_keep_border() {
@@ -114,10 +114,10 @@ function extract_xml_forecast() {
 
 function update_weather() {
     WEATHER=`curl http://w1.weather.gov/xml/current_obs/KMSP.xml 2>/dev/null`
-    #echo $WEATHER > weather.xml
+    # echo $WEATHER > weather.xml
     # WEATHER=`cat weather.xml`
-    #FORECAST=`curl "http://api.openweathermap.org/data/2.5/forecast?id=5037649&mode=xml&APPID=94bd78ff32b4f3ff159847bc6f2d744a" 2>/dev/null`
-    #echo $FORECAST > forecast.xml
+    # FORECAST=`curl "http://api.openweathermap.org/data/2.5/forecast?id=5037649&mode=xml&APPID=94bd78ff32b4f3ff159847bc6f2d744a" 2>/dev/null`
+    # echo $FORECAST > forecast.xml
     # FORECAST=`cat forecast.xml`
 }
 
@@ -128,6 +128,7 @@ function dump_basic_weather() {
     local WIND_DIR=`extract_xml_weather "$WEATHER" wind_dir`
     local WIND_MPH=`extract_xml_weather "$WEATHER" wind_mph`
     local HUMIDITY=`extract_xml_weather "$WEATHER" relative_humidity`
+
     local DISPLAY_LINE=2
     local DISPLAY_COL=3
     clear_specified_line_keep_border $DISPLAY_LINE
@@ -150,9 +151,100 @@ function dump_basic_weather() {
     fg_random
     echo -n "${TEMP}ºF"
     DISPLAY_LINE=$((DISPLAY_LINE+2))
-    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    draw_weather "$STRING" $DISPLAY_LINE $DISPLAY_COL
+    DISPLAY_LINE=$((DISPLAY_LINE+7))
     fg_random
-    print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
+    print_large_number $TEMP $DISPLAY_LINE $((DISPLAY_COL+1))
+}
+
+function draw_weather() {
+    local WEATHER_STRING=$1
+    local DISPLAY_LINE=$2
+    local DISPLAY_COL=$3
+
+    local CURR_HOUR=`TZ='America/Chicago' date +"%H"`
+    if [ $CURR_HOUR -gt 6 -o $CURR_HOUR -lt 20 ]; then
+	local IS_DAYTIME=1
+    else
+	local IS_DAYTIME=0
+    fi
+
+    local LINE0="                                "
+    local LINE1="                                "
+    local LINE2="                                "
+    local LINE3="                                "
+    local LINE4="                                "
+    local LINE5="                                "
+    if [[ $WEATHER_STRING == *"Cloud"* ]]; then
+	fg_white
+	LINE0="      _____              ______ "
+	LINE1="     (_____) __    ___  (______)"
+	LINE2="            (__)  (___)         "
+	LINE3="                __              "
+	LINE4="   ______      (__)         _   "
+	LINE5="  (______)                 (_)  "
+    elif [[ $WEATHER_STRING == *"Overcast"* ]]; then
+	fg_light_gray
+	LINE0="_       _            -    _    -"
+	LINE1="-   -           -              -"  
+	LINE2="_--__-----_---_____-_---____----"
+	LINE3="                                "
+	LINE4="                                "
+	LINE5="                                "
+    elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 0 ]]; then
+	fg_white
+	LINE0="            *        *    *     "
+	LINE1="  *            *      *        *"
+	LINE2="      *                  *      "
+	LINE3="          *         *           "
+	LINE4="    *                        *  "
+	LINE5="                 *     *        "
+    elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 1 ]]; then
+	fg_yellow
+	LINE0="         \   __|__   /          "
+	LINE1="        -   /     \   -         "
+	LINE2="       _   /       \   _        "
+	LINE3="       _   \       /   _        "
+	LINE4="        -   \_____/   -         "
+	LINE5="         /     |     \          "
+    elif [[ $WEATHER_STRING == *"Rain"* ]]; then
+	fg_light_blue
+	LINE0="_--__-----_---_____-_---____---_"
+	LINE1="  \    \       \           \  \ "
+	LINE2=" \   \     \   \   \ \   \      "
+	LINE3="    \ \      \                \ "
+	LINE4="         \       \    \      \  "
+	LINE5="  \   \       \      \    \   \ "
+    elif [[ $WEATHER_STRING == *"Thunderstorm"* ]]; then
+	fg_yellow
+	LINE0="          |\           \        "
+	LINE1="    \     \ \          \\       "
+	LINE2="    \\    _\ \         //       "
+	LINE3="    //    \  _\        \\       "
+	LINE4="    \\     \ \          \       "
+	LINE5="     \      \|                  "
+    elif [[ $WEATHER_STRING == *"Fog"* ]]; then
+	fg_light_gray
+	LINE0="################################"
+	LINE1="################################"
+	LINE2="################################"
+	LINE3="################################"
+	LINE4="################################"
+	LINE5="################################"
+    fi
+
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+    echo -n "$LINE0"
+    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+    echo -n "$LINE1"
+    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+    echo -n "$LINE2"
+    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+    echo -n "$LINE3"
+    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+    echo -n "$LINE4"
+    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+    echo -n "$LINE5"
 }
 
 function dump_basic_forecast() {
