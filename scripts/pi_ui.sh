@@ -34,8 +34,7 @@ function ctrl_c() {
     exit 0
 }
 
-function run_pass() {
-    update_weather
+function run_pass_blocking() {
     dump_basic_weather
     # dump_basic_forecast
     # exit 0
@@ -43,6 +42,16 @@ function run_pass() {
 	dump_date
 	spin_one_second
    done
+}
+
+function run_pass_non_blocking() {
+    local OFFSET=0
+    for i in {1..15}; do
+	draw_weather $OFFSET
+	cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-3))
+	#OFFSET=$((OFFSET+1))
+	sleep 1
+    done
 }
 
 function clear_specified_line_keep_border() {
@@ -150,14 +159,22 @@ function dump_basic_weather() {
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
     echo -n "${TEMP}ºF"
-    DISPLAY_LINE=$((DISPLAY_LINE+2))
-    draw_weather "$STRING" $DISPLAY_LINE $DISPLAY_COL
-    DISPLAY_LINE=$((DISPLAY_LINE+7))
+    DISPLAY_LINE=$((DISPLAY_LINE+8))
+    DISPLAY_COL=$((DISPLAY_COL+1))
     fg_random
-    print_large_number $TEMP $DISPLAY_LINE $((DISPLAY_COL+1))
+    print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
 }
 
 function draw_weather() {
+    local OFFSET=$1
+    local STRING=`extract_xml_weather "$WEATHER" weather`
+
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=$((OFFSET + 3))
+    draw_weather_aux "$STRING" $DISPLAY_LINE $DISPLAY_COL
+}
+
+function draw_weather_aux() {
     local WEATHER_STRING=$1
     local DISPLAY_LINE=$2
     local DISPLAY_COL=$3
@@ -270,7 +287,9 @@ function run_loop() {
     draw_border
     xdotool mousemove 0 0
     while [ 1 ]; do
-    	run_pass
+	update_weather
+    	run_pass_non_blocking &
+    	run_pass_blocking
     done
 }
 
