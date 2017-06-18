@@ -45,13 +45,7 @@ function run_pass_blocking() {
 }
 
 function run_pass_non_blocking() {
-    local OFFSET=0
-    for i in {1..15}; do
-	draw_weather $OFFSET
-	cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-3))
-	#OFFSET=$((OFFSET+1))
-	sleep 1
-    done
+    draw_weather
 }
 
 function clear_specified_line_keep_border() {
@@ -166,13 +160,408 @@ function dump_basic_weather() {
 }
 
 function draw_weather() {
-    local OFFSET=$1
     local STRING=`extract_xml_weather "$WEATHER" weather`
-
+    if [ $(( RANDOM % 2 )) -eq 0 ]; then
+	STRING="Thunderstorm"
+    fi
     local DISPLAY_LINE=9
     local DISPLAY_COL=$((OFFSET + 3))
     draw_weather_aux "$STRING" $DISPLAY_LINE $DISPLAY_COL
 }
+
+function draw_clouds() {
+    LINE0="      _____              ______ "
+    LINE1="     (_____) __    ___  (______)"
+    LINE2="            (__)  (___)         "
+    LINE3="                __              "
+    LINE4="   ______      (__)         _   "
+    LINE5="  (______)                 (_)  "
+
+    local OFFSET=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    local LWID=$((WIDTH-5))
+    while [ 1 ]; do
+	fg_white
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	sleep 1
+	OFFSET=$((OFFSET+1))
+	if [ $OFFSET -gt $LWID ]; then
+	    OFFSET=0
+	fi
+    done
+}
+
+function draw_overcast() {
+    LINE0="  -     _            -    _    -"
+    LINE1="-   -           -           _   "  
+    LINE2="_--__-----_---_____-_---____----"
+    LINE3="                                "
+    LINE4="                                "
+    LINE5="                                "
+
+    local OFFSET=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    local LWID=$((WIDTH-5))
+    while [ 1 ]; do
+	fg_light_gray
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	sleep 1
+	OFFSET=$((OFFSET+1))
+	if [ $OFFSET -gt $LWID ]; then
+	    OFFSET=0
+	fi
+    done
+}
+
+function draw_sunny() {
+    LINE0_0="             __|__   /          "
+    LINE1_0="        -   /     \   -         "
+    LINE2_0="           /       \            "
+    LINE3_0="       _   \       /   _        "
+    LINE4_0="        -   \_____/             "
+    LINE5_0="         /     |                "
+
+    LINE0_1="         \   _____   /          "
+    LINE1_1="            /     \   -         "
+    LINE2_1="       _   /       \            "
+    LINE3_1="       _   \       /   _        "
+    LINE4_1="        -   \_____/   -         "
+    LINE5_1="                                "
+
+    LINE0_2="             __|__              "
+    LINE1_2="        -   /     \   -         "
+    LINE2_2="           /       \   _        "
+    LINE3_2="       _   \       /   _        "
+    LINE4_2="        -   \_____/             "
+    LINE5_2="         /     |     \          "
+
+    LINE0_3="         \   __|__              "
+    LINE1_3="        -   /     \             "
+    LINE2_3="           /       \   _        "
+    LINE3_3="           \       /   _        "
+    LINE4_3="        -   \_____/   -         "
+    LINE5_3="         /           \          "
+
+    LINE0_4="         \   __|__   /          "
+    LINE1_4="        -   /     \   -         "
+    LINE2_4="       _   /       \            "
+    LINE3_4="           \       /   _        "
+    LINE4_4="            \_____/   -         "
+    LINE5_4="         /     |                "
+
+    LINE0_5="         \   _____   /          "
+    LINE1_5="        -   /     \   -         "
+    LINE2_5="       _   /       \   _        "
+    LINE3_5="       _   \       /            "
+    LINE4_5="         -  \_____/   -         "
+    LINE5_5="               |                "
+
+    local FRAME=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    while [ 1 ]; do
+	fg_yellow
+	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
+	sleep 0.1
+	FRAME=$((RANDOM % 6))
+    done
+}
+
+function draw_rain() {
+    LINE0_0="_--__-----_---_____-_---____---_"
+    LINE1_0="  \   \       \      \    \   \ "
+    LINE2_0="  \    \       \           \  \ "
+    LINE3_0=" \   \     \   \   \ \   \      "
+    LINE4_0="    \ \      \                \ "
+    LINE5_0="         \       \    \      \  "
+    
+    LINE0_1="_--__-----_---_____-_---____---_"
+    LINE1_1="         \       \    \      \  "
+    LINE2_1="  \   \       \      \    \   \ "
+    LINE3_1="  \    \       \           \  \ "
+    LINE4_1=" \   \     \   \   \ \   \      "
+    LINE5_1="    \ \      \                \ "
+    
+    LINE0_2="_--__-----_---_____-_---____---_"
+    LINE1_2="    \ \      \                \ "
+    LINE2_2="         \       \    \      \  "
+    LINE3_2="  \   \       \      \    \   \ "
+    LINE4_2="  \    \       \           \  \ "
+    LINE5_2=" \   \     \   \   \ \   \      "
+    
+    LINE0_3="_--__-----_---_____-_---____---_"
+    LINE1_3=" \   \     \   \   \ \   \      "
+    LINE2_3="    \ \      \                \ "
+    LINE3_3="         \       \    \      \  "
+    LINE4_3="  \   \       \      \    \   \ "
+    LINE5_3="  \    \       \           \  \ "
+    
+    LINE0_4="_--__-----_---_____-_---____---_"
+    LINE1_4="  \    \       \           \  \ "
+    LINE2_4=" \   \     \   \   \ \   \      "
+    LINE3_4="    \ \      \                \ "
+    LINE4_4="         \       \    \      \  "
+    LINE5_4="  \   \       \      \    \   \ "
+    
+    local FRAME=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    while [ 1 ]; do
+	fg_blue
+	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
+	sleep 1
+	FRAME=$((FRAME + 1))
+	if [ $FRAME -eq 4 ]; then
+	    FRAME=0
+	fi
+    done
+}
+
+function draw_clear() {
+    LINE0_0="            *        *          "
+    LINE1_0="  *            *      *        *"
+    LINE2_0="                         *      "
+    LINE3_0="          *                     "
+    LINE4_0="    *                           "
+    LINE5_0="                 *     *        "
+
+    LINE0_1="            *             *     "
+    LINE1_1="  *            *      *        *"
+    LINE2_1="      *                  *      "
+    LINE3_1="          *                     "
+    LINE4_1="                             *  "
+    LINE5_1="                 *     *        "
+
+    LINE0_2="            *             *     "
+    LINE1_2="                      *        *"
+    LINE2_2="      *                         "
+    LINE3_2="          *         *           "
+    LINE4_2="    *                        *  "
+    LINE5_2="                       *        "
+
+    LINE0_3="            *             *     "
+    LINE1_3="  *            *      *         "
+    LINE2_3="      *                  *      "
+    LINE3_3="          *         *           "
+    LINE4_3="    *                        *  "
+    LINE5_3="                 *              "
+
+    LINE0_4="            *        *    *     "
+    LINE1_4="  *            *               *"
+    LINE2_4="                         *      "
+    LINE3_4="          *         *           "
+    LINE4_4="    *                        *  "
+    LINE5_4="                       *        "
+
+    LINE0_5="                          *     "
+    LINE1_5="  *            *      *        *"
+    LINE2_5="      *                  *      "
+    LINE3_5="                                "
+    LINE4_5="    *                        *  "
+    LINE5_5="                 *     *        "
+
+    local FRAME=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    while [ 1 ]; do
+	fg_white
+	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
+	sleep 2
+	FRAME=$((RANDOM % 6))
+    done
+}
+
+function draw_thunderstorm() {
+    LINE0_0="                                "
+    LINE1_0="                                "
+    LINE2_0="                                "
+    LINE3_0="                                "
+    LINE4_0="                                "
+    LINE5_0="                                "
+    
+    LINE0_1="\\ "
+    LINE1_1="\\\\ "
+    LINE2_1=" \\\\ "
+    LINE3_1=" // "
+    LINE4_1=" \\\\ "
+    LINE5_1="  \ "
+
+    LINE0_2=" / "
+    LINE1_2="// "
+    LINE2_2="\\\\ "
+    LINE3_2=" \\\\ "
+    LINE4_2=" // "
+    LINE5_2=" / "
+
+    local FRAME=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    local OFFSET=0
+    local LWID=$((WIDTH-6))
+    while [ 1 ]; do
+	fg_yellow
+	show_frame $FRAME $DISPLAY_LINE $((DISPLAY_COL+OFFSET))
+	sleep 0.2
+	FRAME=$((RANDOM % 20))
+	OFFSET=$((RANDOM % LWID))
+	if [ $FRAME -gt 2 ]; then
+	    FRAME=0;
+	fi
+	if [ $FRAME -eq 0 ]; then
+	    OFFSET=0
+	fi
+    done
+}
+
+function draw_fog() {
+    LINE0="#@#########@#################@##"
+    LINE1="#################@@#######@#####"
+    LINE2="#############@##################"
+    LINE3="#####@##########################"
+    LINE4="########################@#######"
+    LINE5="@#############@###########@#####"
+    
+    local OFFSET=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    local LWID=$((WIDTH-5))
+    while [ 1 ]; do
+	fg_light_gray
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	sleep 0.1
+	OFFSET=$((OFFSET+1))
+	if [ $OFFSET -gt $LWID ]; then
+	    OFFSET=0
+	fi
+    done
+}
+
+function scroll_image() {
+    local OFFSET=$1
+    local DISPLAY_LINE=$2
+    local DISPLAY_COL=$3
+    local LWID=$4
+    local LINE_LEN=${#LINE0}
+
+    local LLINE0=${LINE0:$((LWID-OFFSET)):$LWID}${LINE0:0:$((LWID-OFFSET))}
+    local LLINE1=${LINE1:$((LWID-OFFSET)):$LWID}${LINE1:0:$((LWID-OFFSET))}
+    local LLINE2=${LINE2:$((LWID-OFFSET)):$LWID}${LINE2:0:$((LWID-OFFSET))}
+    local LLINE3=${LINE3:$((LWID-OFFSET)):$LWID}${LINE3:0:$((LWID-OFFSET))}
+    local LLINE4=${LINE4:$((LWID-OFFSET)):$LWID}${LINE4:0:$((LWID-OFFSET))}
+    local LLINE5=${LINE5:$((LWID-OFFSET)):$LWID}${LINE5:0:$((LWID-OFFSET))}
+    
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+    echo -n "$LLINE0"
+    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+    echo -n "$LLINE1"
+    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+    echo -n "$LLINE2"
+    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+    echo -n "$LLINE3"
+    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+    echo -n "$LLINE4"
+    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+    echo -n "$LLINE5"
+    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-3))
+}
+
+
+function show_frame() {
+    local FRAME=$1
+    local DISPLAY_LINE=$2
+    local DISPLAY_COL=$3
+
+    case $FRAME in
+	0)
+	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	    echo -n "$LINE0_0"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+	    echo -n "$LINE1_0"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+	    echo -n "$LINE2_0"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+	    echo -n "$LINE3_0"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+	    echo -n "$LINE4_0"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+	    echo -n "$LINE5_0"
+	    ;;
+	1)
+	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	    echo -n "$LINE0_1"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+	    echo -n "$LINE1_1"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+	    echo -n "$LINE2_1"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+	    echo -n "$LINE3_1"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+	    echo -n "$LINE4_1"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+	    echo -n "$LINE5_1"
+	;;
+	2)
+	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	    echo -n "$LINE0_2"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+	    echo -n "$LINE1_2"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+	    echo -n "$LINE2_2"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+	    echo -n "$LINE3_2"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+	    echo -n "$LINE4_2"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+	    echo -n "$LINE5_2"
+	;;
+	3)
+	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	    echo -n "$LINE0_3"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+	    echo -n "$LINE1_3"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+	    echo -n "$LINE2_3"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+	    echo -n "$LINE3_3"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+	    echo -n "$LINE4_3"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+	    echo -n "$LINE5_3"
+	;;
+	4)
+	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	    echo -n "$LINE0_4"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+	    echo -n "$LINE1_4"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+	    echo -n "$LINE2_4"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+	    echo -n "$LINE3_4"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+	    echo -n "$LINE4_4"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+	    echo -n "$LINE5_4"
+	;;
+	5)
+	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	    echo -n "$LINE0_5"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+	    echo -n "$LINE1_5"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+	    echo -n "$LINE2_5"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+	    echo -n "$LINE3_5"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+	    echo -n "$LINE4_5"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+	    echo -n "$LINE5_5"
+	;;
+    esac
+    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-3))
+}
+
 
 function draw_weather_aux() {
     local WEATHER_STRING=$1
@@ -193,75 +582,20 @@ function draw_weather_aux() {
     local LINE4="                                "
     local LINE5="                                "
     if [[ $WEATHER_STRING == *"Cloud"* ]]; then
-	fg_white
-	LINE0="      _____              ______ "
-	LINE1="     (_____) __    ___  (______)"
-	LINE2="            (__)  (___)         "
-	LINE3="                __              "
-	LINE4="   ______      (__)         _   "
-	LINE5="  (______)                 (_)  "
+	draw_clouds
     elif [[ $WEATHER_STRING == *"Overcast"* ]]; then
-	fg_light_gray
-	LINE0="_       _            -    _    -"
-	LINE1="-   -           -              -"  
-	LINE2="_--__-----_---_____-_---____----"
-	LINE3="                                "
-	LINE4="                                "
-	LINE5="                                "
+	draw_overcast
     elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 0 ]]; then
-	fg_white
-	LINE0="            *        *    *     "
-	LINE1="  *            *      *        *"
-	LINE2="      *                  *      "
-	LINE3="          *         *           "
-	LINE4="    *                        *  "
-	LINE5="                 *     *        "
+	draw_clear
     elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 1 ]]; then
-	fg_yellow
-	LINE0="         \   __|__   /          "
-	LINE1="        -   /     \   -         "
-	LINE2="       _   /       \   _        "
-	LINE3="       _   \       /   _        "
-	LINE4="        -   \_____/   -         "
-	LINE5="         /     |     \          "
+	draw_sunny
     elif [[ $WEATHER_STRING == *"Rain"* ]]; then
-	fg_light_blue
-	LINE0="_--__-----_---_____-_---____---_"
-	LINE1="  \    \       \           \  \ "
-	LINE2=" \   \     \   \   \ \   \      "
-	LINE3="    \ \      \                \ "
-	LINE4="         \       \    \      \  "
-	LINE5="  \   \       \      \    \   \ "
+	draw_rain
     elif [[ $WEATHER_STRING == *"Thunderstorm"* ]]; then
-	fg_yellow
-	LINE0="          |\           \        "
-	LINE1="    \     \ \          \\       "
-	LINE2="    \\    _\ \         //       "
-	LINE3="    //    \  _\        \\       "
-	LINE4="    \\     \ \          \       "
-	LINE5="     \      \|                  "
+	draw_thunderstorm
     elif [[ $WEATHER_STRING == *"Fog"* ]]; then
-	fg_light_gray
-	LINE0="################################"
-	LINE1="################################"
-	LINE2="################################"
-	LINE3="################################"
-	LINE4="################################"
-	LINE5="################################"
+	draw_fog
     fi
-
-    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    echo -n "$LINE0"
-    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-    echo -n "$LINE1"
-    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-    echo -n "$LINE2"
-    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-    echo -n "$LINE3"
-    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-    echo -n "$LINE4"
-    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-    echo -n "$LINE5"
 }
 
 function dump_basic_forecast() {
@@ -286,10 +620,25 @@ function dump_date() {
 function run_loop() {
     draw_border
     xdotool mousemove 0 0
+    local CURRENT_WEATHER_STRING=""
+    local PREVIOUS_WEATHER_STRING=""
+    local RPNB_PID=0
     while [ 1 ]; do
 	update_weather
-    	run_pass_non_blocking &
+	CURRENT_WEATHER_STRING=`extract_xml_weather "$WEATHER" weather`
+	# if [ $(( RANDOM % 2 )) -eq 0 ]; then
+	#     STRING="Thunderstorm"
+	# fi
+	if [ "$CURRENT_WEATHER_STRING" != "$PREVIOUS_WEATHER_STRING" ]; then
+	    if [ $RPNB_PID -ne 0 ]; then
+		(kill -9 $RPNB_PID)
+	    fi
+    	    run_pass_non_blocking &
+	    RPNB_PID=$!
+	fi
     	run_pass_blocking
+	# PREVIOUS_WEATHER_STRING=$CURRENT_WEATHER_STRING
+	PREVIOUS_WEATHER_STRING="asdf"
     done
 }
 
