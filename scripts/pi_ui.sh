@@ -25,27 +25,13 @@ function get_height() {
 function get_width() {
     # tput cols
 #     echo 58
-    echo 36
+    echo 37
 }
 
 function ctrl_c() {
     fg_default
     cm_move_cursor_to_point $HEIGHT 0
     exit 0
-}
-
-function run_pass_blocking() {
-    dump_basic_weather
-    # dump_basic_forecast
-    # exit 0
-   for i in {1..15}; do
-	dump_date
-	spin_one_second
-   done
-}
-
-function run_pass_non_blocking() {
-    draw_weather
 }
 
 function clear_specified_line_keep_border() {
@@ -81,19 +67,24 @@ function draw_border() {
 }
 
 function spin_one_second() {
-    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-3))
+    local STAGE=$1
     fg_yellow
-    local SLEEP_DUR=0.125
-    for j in {1..2}; do
-	echo -ne "\b-"
-	sleep $SLEEP_DUR
-	echo -ne "\b\\"
-	sleep $SLEEP_DUR
-	echo -ne "\b|"
-	sleep $SLEEP_DUR
-	echo -ne "\b/"
-	sleep $SLEEP_DUR
-    done
+    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
+    case $STAGE in
+	0)
+	    echo -ne "\b-"
+	    ;;
+	1)
+	    echo -ne "\b\\"
+	    ;;
+	2)
+	    echo -ne "\b|"
+	    ;;
+	3)
+	    echo -ne "\b/"
+	    ;;
+    esac
+    sleep 1
 }
 
 function extract_xml_weather() {
@@ -161,13 +152,99 @@ function dump_basic_weather() {
 
 function draw_weather() {
     local STRING=`extract_xml_weather "$WEATHER" weather`
-    if [ $(( RANDOM % 2 )) -eq 0 ]; then
-	STRING="Thunderstorm"
-    fi
     local DISPLAY_LINE=9
     local DISPLAY_COL=$((OFFSET + 3))
     draw_weather_aux "$STRING" $DISPLAY_LINE $DISPLAY_COL
 }
+
+function draw_weather_aux() {
+    local WEATHER_STRING=$1
+    local DISPLAY_LINE=$2
+    local DISPLAY_COL=$3
+
+    local CURR_HOUR=`TZ='America/Chicago' date +"%H"`
+    if [ $CURR_HOUR -gt 6 -o $CURR_HOUR -lt 20 ]; then
+	local IS_DAYTIME=1
+    else
+	local IS_DAYTIME=0
+    fi
+
+    if [[ $WEATHER_STRING == *"Cloud"* ]]; then
+	draw_clouds
+    elif [[ $WEATHER_STRING == *"Overcast"* ]]; then
+	draw_overcast
+    elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 0 ]]; then
+	draw_clear
+    elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 1 ]]; then
+	draw_sunny
+    elif [[ $WEATHER_STRING == *"Rain"* ]]; then
+	draw_rain
+    elif [[ $WEATHER_STRING == *"Thunderstorm"* ]]; then
+	draw_thunderstorm
+    elif [[ $WEATHER_STRING == *"Fog"* ]]; then
+	draw_fog
+    fi
+}
+
+function dump_basic_forecast() {
+    local TEMP=`extract_xml_forecast "$FORECAST" time from`
+    local DISPLAY_LINE=2
+    local DISPLAY_COL=3
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+    fg_random
+    echo -n "${TEMP}"
+}
+
+
+function dump_date() {
+    local DATE=`TZ='America/Chicago' date +"%A %b %d %l:%M:%S"`
+    clear_specified_line_keep_border $((HEIGHT-3))
+    cm_move_cursor_to_point $((HEIGHT-3)) 3
+    fg_cyan
+    echo -n "$DATE"
+}
+
+function run_loop() {
+    draw_border
+    xdotool mousemove 0 0
+    local CURRENT_WEATHER_STRING=""
+    local PREVIOUS_WEATHER_STRING=""
+    local RPNB_PID=0
+    while [ 1 ]; do
+	update_weather
+	CURRENT_WEATHER_STRING=`extract_xml_weather "$WEATHER" weather`
+	if [ "$CURRENT_WEATHER_STRING" != "$PREVIOUS_WEATHER_STRING" ]; then
+	    if [ $RPNB_PID -ne 0 ]; then
+		(kill -9 $RPNB_PID)
+	    fi
+    	    run_pass_non_blocking &
+	    RPNB_PID=$!
+	fi
+    	run_pass_blocking
+	PREVIOUS_WEATHER_STRING=$CURRENT_WEATHER_STRING
+    done
+}
+
+
+function run_pass_blocking() {
+    dump_basic_weather
+    # dump_basic_forecast
+    # exit 0
+    local STAGE=0
+    for i in {1..15}; do
+	dump_date
+	spin_one_second $STAGE
+	STAGE=$(((STAGE+1)%4))
+    done
+}
+
+function run_pass_non_blocking() {
+    draw_weather
+}
+
+################################################################################
+# Draw functions
+################################################################################
 
 function draw_clouds() {
     LINE0="      _____              ______ "
@@ -264,7 +341,7 @@ function draw_sunny() {
     while [ 1 ]; do
 	fg_yellow
 	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
-	sleep 0.1
+	sleep 1
 	FRAME=$((RANDOM % 6))
     done
 }
@@ -464,9 +541,8 @@ function scroll_image() {
     echo -n "$LLINE4"
     cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
     echo -n "$LLINE5"
-    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-3))
+    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
 }
-
 
 function show_frame() {
     local FRAME=$1
@@ -559,93 +635,13 @@ function show_frame() {
 	    echo -n "$LINE5_5"
 	;;
     esac
-    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-3))
-}
-
-
-function draw_weather_aux() {
-    local WEATHER_STRING=$1
-    local DISPLAY_LINE=$2
-    local DISPLAY_COL=$3
-
-    local CURR_HOUR=`TZ='America/Chicago' date +"%H"`
-    if [ $CURR_HOUR -gt 6 -o $CURR_HOUR -lt 20 ]; then
-	local IS_DAYTIME=1
-    else
-	local IS_DAYTIME=0
-    fi
-
-    local LINE0="                                "
-    local LINE1="                                "
-    local LINE2="                                "
-    local LINE3="                                "
-    local LINE4="                                "
-    local LINE5="                                "
-    if [[ $WEATHER_STRING == *"Cloud"* ]]; then
-	draw_clouds
-    elif [[ $WEATHER_STRING == *"Overcast"* ]]; then
-	draw_overcast
-    elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 0 ]]; then
-	draw_clear
-    elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 1 ]]; then
-	draw_sunny
-    elif [[ $WEATHER_STRING == *"Rain"* ]]; then
-	draw_rain
-    elif [[ $WEATHER_STRING == *"Thunderstorm"* ]]; then
-	draw_thunderstorm
-    elif [[ $WEATHER_STRING == *"Fog"* ]]; then
-	draw_fog
-    fi
-}
-
-function dump_basic_forecast() {
-    local TEMP=`extract_xml_forecast "$FORECAST" time from`
-    local DISPLAY_LINE=2
-    local DISPLAY_COL=3
-    # clear_specified_line_keep_border $DISPLAY_LINE
-    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    # fg_random
-    echo -n "${TEMP}"
-}
-
-
-function dump_date() {
-    local DATE=`TZ='America/Chicago' date +"%A %b %d %l:%M:%S"`
-    clear_specified_line_keep_border $((HEIGHT-3))
-    cm_move_cursor_to_point $((HEIGHT-3)) 3
-    fg_cyan
-    echo -n "$DATE"
-}
-
-function run_loop() {
-    draw_border
-    xdotool mousemove 0 0
-    local CURRENT_WEATHER_STRING=""
-    local PREVIOUS_WEATHER_STRING=""
-    local RPNB_PID=0
-    while [ 1 ]; do
-	update_weather
-	CURRENT_WEATHER_STRING=`extract_xml_weather "$WEATHER" weather`
-	# if [ $(( RANDOM % 2 )) -eq 0 ]; then
-	#     STRING="Thunderstorm"
-	# fi
-	if [ "$CURRENT_WEATHER_STRING" != "$PREVIOUS_WEATHER_STRING" ]; then
-	    if [ $RPNB_PID -ne 0 ]; then
-		(kill -9 $RPNB_PID)
-	    fi
-    	    run_pass_non_blocking &
-	    RPNB_PID=$!
-	fi
-    	run_pass_blocking
-	# PREVIOUS_WEATHER_STRING=$CURRENT_WEATHER_STRING
-	PREVIOUS_WEATHER_STRING="asdf"
-    done
+    cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
 }
 
 # Globals
-COUNT=0
 HEIGHT=`get_height`
 WIDTH=`get_width`
+PL=0
 
 ################################################################################
 ## Main
