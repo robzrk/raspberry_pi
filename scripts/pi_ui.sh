@@ -7,6 +7,7 @@ SCRIPTS_DIR=~/raspberry_pi/scripts
 source $SCRIPTS_DIR/cursor_manipulation.sh
 source $SCRIPTS_DIR/colors.sh
 source $SCRIPTS_DIR/numbers.sh
+source $SCRIPTS_DIR/print_lib.sh
 
 trap ctrl_c INT
 
@@ -29,8 +30,11 @@ function get_width() {
 }
 
 function ctrl_c() {
+    print_lock_cleanup
     fg_default
+    print_lock_cleanup
     cm_move_cursor_to_point $HEIGHT 0
+    print_lock_cleanup
     exit 0
 }
 
@@ -39,9 +43,9 @@ function clear_specified_line_keep_border() {
     fg_light_purple
     cm_clear_specified_line $L 0
     cm_move_cursor_to_point $L 0
-    echo -n "*"
+    print_lock "-n" "*"
     cm_move_cursor_to_point $L $WIDTH
-    echo -n "*"
+    print_lock "-n" "*"
 }
 
 function draw_border() {
@@ -53,13 +57,13 @@ function draw_border() {
 	if [ $LINE -eq 1 -o $LINE -eq $((HEIGHT-1)) ]; then
 	    local COL=1
 	    while [ $COL -le $WIDTH ]; do
-	    	echo -n "*"
-		COL=$(( COL + 1 ))
+	    	print_lock "-n" "*"
+    		COL=$(( COL + 1 ))
 	    done
 	else
-	    echo -n "*"
+	    print_lock "-n" "*"
 	    cm_move_cursor_to_point $LINE $WIDTH
-	    echo -n "*"
+	    print_lock "-n" "*"
 	fi
 	echo ""
 	LINE=$(( LINE + 1 ))
@@ -72,16 +76,16 @@ function spin_one_second() {
     cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
     case $STAGE in
 	0)
-	    echo -ne "\b-"
+	    print_lock "-ne" "\b-"
 	    ;;
 	1)
-	    echo -ne "\b\\"
+	    print_lock "-ne" "\b\\"
 	    ;;
 	2)
-	    echo -ne "\b|"
+	    print_lock "-ne" "\b|"
 	    ;;
 	3)
-	    echo -ne "\b/"
+	    print_lock "-ne" "\b/"
 	    ;;
     esac
     sleep 1
@@ -128,22 +132,22 @@ function dump_basic_weather() {
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "$STRING."
+    print_lock "-n" "$STRING."
     DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "Wind: $WIND_DIR @ ${WIND_MPH}MPH"
+    print_lock "-n" "Wind: $WIND_DIR @ ${WIND_MPH}MPH"
     DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "Humidity: ${HUMIDITY}%"
+    print_lock "-n" "Humidity: ${HUMIDITY}%"
     DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "${TEMP}ºF"
+    print_lock "-n" "${TEMP}ºF"
     DISPLAY_LINE=$((DISPLAY_LINE+8))
     DISPLAY_COL=$((DISPLAY_COL+1))
     fg_random
@@ -152,6 +156,7 @@ function dump_basic_weather() {
 
 function draw_weather() {
     local STRING=`extract_xml_weather "$WEATHER" weather`
+    
     local DISPLAY_LINE=9
     local DISPLAY_COL=$((OFFSET + 3))
     draw_weather_aux "$STRING" $DISPLAY_LINE $DISPLAY_COL
@@ -192,7 +197,7 @@ function dump_basic_forecast() {
     local DISPLAY_COL=3
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "${TEMP}"
+    print_lock "-n" "${TEMP}"
 }
 
 
@@ -201,7 +206,7 @@ function dump_date() {
     clear_specified_line_keep_border $((HEIGHT-3))
     cm_move_cursor_to_point $((HEIGHT-3)) 3
     fg_cyan
-    echo -n "$DATE"
+    print_lock "-n" "$DATE"
 }
 
 function run_loop() {
@@ -210,7 +215,13 @@ function run_loop() {
     local CURRENT_WEATHER_STRING=""
     local PREVIOUS_WEATHER_STRING=""
     local RPNB_PID=0
+    local RUN_CNT=0
     while [ 1 ]; do
+	# Hack - do this until echo statements between threads can run cleanly
+	if [ $RUN_CNT -eq 0 ]; then
+	    clear
+	    draw_border
+	fi
 	update_weather
 	CURRENT_WEATHER_STRING=`extract_xml_weather "$WEATHER" weather`
 	if [ "$CURRENT_WEATHER_STRING" != "$PREVIOUS_WEATHER_STRING" ]; then
@@ -222,6 +233,7 @@ function run_loop() {
 	fi
     	run_pass_blocking
 	PREVIOUS_WEATHER_STRING=$CURRENT_WEATHER_STRING
+	RUN_CNT=$(((RUN_CNT+1)%10))
     done
 }
 
@@ -293,56 +305,71 @@ function draw_overcast() {
 }
 
 function draw_sunny() {
-    LINE0_0="             __|__   /          "
-    LINE1_0="        -   /     \   -         "
+    LINE0_0="             _____              "
+    LINE1_0="            /     \             "
     LINE2_0="           /       \            "
-    LINE3_0="       _   \       /   _        "
-    LINE4_0="        -   \_____/             "
-    LINE5_0="         /     |                "
+    LINE3_0="           \       /            "
+    LINE4_0="            \_____/             "
+    LINE5_0="                                "
 
-    LINE0_1="         \   _____   /          "
-    LINE1_1="            /     \   -         "
-    LINE2_1="       _   /       \            "
-    LINE3_1="       _   \       /   _        "
-    LINE4_1="        -   \_____/   -         "
+    LINE0_1="             __.__              "
+    LINE1_1="           ./     \.            "
+    LINE2_1="          ./       \.           "
+    LINE3_1="          .\       /.           "
+    LINE4_1="           .\__.__/.            "
     LINE5_1="                                "
 
     LINE0_2="             __|__              "
-    LINE1_2="        -   /     \   -         "
-    LINE2_2="           /       \   _        "
-    LINE3_2="       _   \       /   _        "
-    LINE4_2="        -   \_____/             "
-    LINE5_2="         /     |     \          "
+    LINE1_2="           \/     \/            "
+    LINE2_2="          _/       \_           "
+    LINE3_2="          _\       /_           "
+    LINE4_2="           /\_____/\            "
+    LINE5_2="               |                "
 
-    LINE0_3="         \   __|__              "
-    LINE1_3="        -   /     \             "
-    LINE2_3="           /       \   _        "
-    LINE3_3="           \       /   _        "
-    LINE4_3="        -   \_____/   -         "
-    LINE5_3="         /           \          "
+    LINE0_3="          \  __'__  /           "
+    LINE1_3="            /     \             "
+    LINE2_3="         _ /       \ _          "
+    LINE3_3="         _ \       / _          "
+    LINE4_3="            \_____/             "
+    LINE5_3="          /    |    \           "
 
-    LINE0_4="         \   __|__   /          "
-    LINE1_4="        -   /     \   -         "
-    LINE2_4="       _   /       \            "
-    LINE3_4="           \       /   _        "
-    LINE4_4="            \_____/   -         "
-    LINE5_4="         /     |                "
+    LINE0_4="          '  _____  '           "
+    LINE1_4="            /     \             "
+    LINE2_4="       _   /       \   _        "
+    LINE3_4="       _   \       /   _        "
+    LINE4_4="            \_____/             "
+    LINE5_4="         .     .     .          "
 
-    LINE0_5="         \   _____   /          "
-    LINE1_5="        -   /     \   -         "
-    LINE2_5="       _   /       \   _        "
-    LINE3_5="       _   \       /            "
-    LINE4_5="         -  \_____/   -         "
-    LINE5_5="               |                "
+    LINE0_5="             _____              "
+    LINE1_5="            /     \             "
+    LINE2_5="    _      /       \      _     "
+    LINE3_5="    _      \       /      _     "
+    LINE4_5="            \_____/             "
+    LINE5_5="                                "
 
+    LINE0_6="             _____              "
+    LINE1_6="            /     \             "
+    LINE2_6="_          /       \           _"
+    LINE3_6="_          \       /           _"
+    LINE4_6="            \_____/             "
+    LINE5_6="                                "
+    
+    LINE0_7="             _____              "
+    LINE1_7="            /     \             "
+    LINE2_7="           /       \            "
+    LINE3_7="           \       /            "
+    LINE4_7="            \_____/             "
+    LINE5_7="                                "
+
+    
     local FRAME=0
     local DISPLAY_LINE=9
     local DISPLAY_COL=3
     while [ 1 ]; do
 	fg_yellow
 	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
-	sleep 1
-	FRAME=$((RANDOM % 6))
+	sleep .3
+	FRAME=$(((FRAME+1)%8))
     done
 }
 
@@ -389,10 +416,7 @@ function draw_rain() {
 	fg_blue
 	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
 	sleep 1
-	FRAME=$((FRAME + 1))
-	if [ $FRAME -eq 4 ]; then
-	    FRAME=0
-	fi
+	FRAME=$(((FRAME+1)%5))
     done
 }
 
@@ -472,18 +496,25 @@ function draw_thunderstorm() {
     LINE4_2=" // "
     LINE5_2=" / "
 
+    LINE0_3=""
+    LINE1_3=""
+    LINE2_3=""
+    LINE3_3=""
+    LINE4_3=""
+    LINE5_3=""
+
     local FRAME=0
     local DISPLAY_LINE=9
     local DISPLAY_COL=3
     local OFFSET=0
-    local LWID=$((WIDTH-6))
+    local LWID=$((WIDTH-4))
     while [ 1 ]; do
 	fg_yellow
 	show_frame $FRAME $DISPLAY_LINE $((DISPLAY_COL+OFFSET))
 	sleep 0.2
 	FRAME=$((RANDOM % 20))
 	OFFSET=$((RANDOM % LWID))
-	if [ $FRAME -gt 2 ]; then
+	if [ $FRAME -gt 3 ]; then
 	    FRAME=0;
 	fi
 	if [ $FRAME -eq 0 ]; then
@@ -507,7 +538,7 @@ function draw_fog() {
     while [ 1 ]; do
 	fg_light_gray
 	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
-	sleep 0.1
+	sleep 0.5
 	OFFSET=$((OFFSET+1))
 	if [ $OFFSET -gt $LWID ]; then
 	    OFFSET=0
@@ -530,17 +561,17 @@ function scroll_image() {
     local LLINE5=${LINE5:$((LWID-OFFSET)):$LWID}${LINE5:0:$((LWID-OFFSET))}
     
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    echo -n "$LLINE0"
+    print_lock "-n" "$LLINE0"
     cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-    echo -n "$LLINE1"
+    print_lock "-n" "$LLINE1"
     cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-    echo -n "$LLINE2"
+    print_lock "-n" "$LLINE2"
     cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-    echo -n "$LLINE3"
+    print_lock "-n" "$LLINE3"
     cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-    echo -n "$LLINE4"
+    print_lock "-n" "$LLINE4"
     cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-    echo -n "$LLINE5"
+    print_lock "-n" "$LLINE5"
     cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
 }
 
@@ -552,87 +583,115 @@ function show_frame() {
     case $FRAME in
 	0)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    echo -n "$LINE0_0"
+	    print_lock "-n" "$LINE0_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    echo -n "$LINE1_0"
+	    print_lock "-n" "$LINE1_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    echo -n "$LINE2_0"
+	    print_lock "-n" "$LINE2_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    echo -n "$LINE3_0"
+	    print_lock "-n" "$LINE3_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    echo -n "$LINE4_0"
+	    print_lock "-n" "$LINE4_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    echo -n "$LINE5_0"
+	    print_lock "-n" "$LINE5_0"
 	    ;;
 	1)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    echo -n "$LINE0_1"
+	    print_lock "-n" "$LINE0_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    echo -n "$LINE1_1"
+	    print_lock "-n" "$LINE1_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    echo -n "$LINE2_1"
+	    print_lock "-n" "$LINE2_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    echo -n "$LINE3_1"
+	    print_lock "-n" "$LINE3_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    echo -n "$LINE4_1"
+	    print_lock "-n" "$LINE4_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    echo -n "$LINE5_1"
+	    print_lock "-n" "$LINE5_1"
 	;;
 	2)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    echo -n "$LINE0_2"
+	    print_lock "-n" "$LINE0_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    echo -n "$LINE1_2"
+	    print_lock "-n" "$LINE1_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    echo -n "$LINE2_2"
+	    print_lock "-n" "$LINE2_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    echo -n "$LINE3_2"
+	    print_lock "-n" "$LINE3_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    echo -n "$LINE4_2"
+	    print_lock "-n" "$LINE4_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    echo -n "$LINE5_2"
+	    print_lock "-n" "$LINE5_2"
 	;;
 	3)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    echo -n "$LINE0_3"
+	    print_lock "-n" "$LINE0_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    echo -n "$LINE1_3"
+	    print_lock "-n" "$LINE1_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    echo -n "$LINE2_3"
+	    print_lock "-n" "$LINE2_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    echo -n "$LINE3_3"
+	    print_lock "-n" "$LINE3_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    echo -n "$LINE4_3"
+	    print_lock "-n" "$LINE4_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    echo -n "$LINE5_3"
+	    print_lock "-n" "$LINE5_3"
 	;;
 	4)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    echo -n "$LINE0_4"
+	    print_lock "-n" "$LINE0_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    echo -n "$LINE1_4"
+	    print_lock "-n" "$LINE1_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    echo -n "$LINE2_4"
+	    print_lock "-n" "$LINE2_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    echo -n "$LINE3_4"
+	    print_lock "-n" "$LINE3_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    echo -n "$LINE4_4"
+	    print_lock "-n" "$LINE4_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    echo -n "$LINE5_4"
+	    print_lock "-n" "$LINE5_4"
 	;;
 	5)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    echo -n "$LINE0_5"
+	    print_lock "-n" "$LINE0_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    echo -n "$LINE1_5"
+	    print_lock "-n" "$LINE1_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    echo -n "$LINE2_5"
+	    print_lock "-n" "$LINE2_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    echo -n "$LINE3_5"
+	    print_lock "-n" "$LINE3_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    echo -n "$LINE4_5"
+	    print_lock "-n" "$LINE4_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    echo -n "$LINE5_5"
+	    print_lock "-n" "$LINE5_5"
+	;;
+	6)
+	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	    print_lock "-n" "$LINE0_6"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+	    print_lock "-n" "$LINE1_6"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+	    print_lock "-n" "$LINE2_6"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+	    print_lock "-n" "$LINE3_6"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+	    print_lock "-n" "$LINE4_6"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+	    print_lock "-n" "$LINE5_6"
+	;;
+	7)
+	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	    print_lock "-n" "$LINE0_7"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
+	    print_lock "-n" "$LINE1_7"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
+	    print_lock "-n" "$LINE2_7"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
+	    print_lock "-n" "$LINE3_7"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
+	    print_lock "-n" "$LINE4_7"
+	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
+	    print_lock "-n" "$LINE5_7"
 	;;
     esac
     cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
