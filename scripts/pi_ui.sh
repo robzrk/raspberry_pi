@@ -43,12 +43,13 @@ function clear_specified_line_keep_border() {
     fg_light_purple
     cm_clear_specified_line $L 0
     cm_move_cursor_to_point $L 0
-    print_lock "-n" "*"
+    echo -n "*"
     cm_move_cursor_to_point $L $WIDTH
-    print_lock "-n" "*"
+    echo -n "*"
 }
 
 function draw_border() {
+    acquire_print_lock
     fg_light_purple
     cm_move_cursor_to_point 0 0
     cm_clear_screen
@@ -57,17 +58,18 @@ function draw_border() {
 	if [ $LINE -eq 1 -o $LINE -eq $((HEIGHT-1)) ]; then
 	    local COL=1
 	    while [ $COL -le $WIDTH ]; do
-	    	print_lock "-n" "*"
+	    	echo -n "*"
     		COL=$(( COL + 1 ))
 	    done
 	else
-	    print_lock "-n" "*"
+	    echo -n "*"
 	    cm_move_cursor_to_point $LINE $WIDTH
-	    print_lock "-n" "*"
+	    echo -n "*"
 	fi
 	echo ""
 	LINE=$(( LINE + 1 ))
     done
+    release_print_lock
 }
 
 function spin_one_second() {
@@ -560,19 +562,21 @@ function scroll_image() {
     local LLINE4=${LINE4:$((LWID-OFFSET)):$LWID}${LINE4:0:$((LWID-OFFSET))}
     local LLINE5=${LINE5:$((LWID-OFFSET)):$LWID}${LINE5:0:$((LWID-OFFSET))}
     
+    acquire_print_lock
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    print_lock "-n" "$LLINE0"
+    echo -n "$LLINE0"
     cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-    print_lock "-n" "$LLINE1"
+    echo -n "$LLINE1"
     cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-    print_lock "-n" "$LLINE2"
+    echo -n "$LLINE2"
     cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-    print_lock "-n" "$LLINE3"
+    echo -n "$LLINE3"
     cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-    print_lock "-n" "$LLINE4"
+    echo -n "$LLINE4"
     cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-    print_lock "-n" "$LLINE5"
+    echo -n "$LLINE5"
     cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
+    release_print_lock
 }
 
 function show_frame() {
@@ -580,121 +584,123 @@ function show_frame() {
     local DISPLAY_LINE=$2
     local DISPLAY_COL=$3
 
+    acquire_print_lock
     case $FRAME in
 	0)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    print_lock "-n" "$LINE0_0"
+	    echo -n "$LINE0_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    print_lock "-n" "$LINE1_0"
+	    echo -n "$LINE1_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    print_lock "-n" "$LINE2_0"
+	    echo -n "$LINE2_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    print_lock "-n" "$LINE3_0"
+	    echo -n "$LINE3_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    print_lock "-n" "$LINE4_0"
+	    echo -n "$LINE4_0"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    print_lock "-n" "$LINE5_0"
+	    echo -n "$LINE5_0"
 	    ;;
 	1)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    print_lock "-n" "$LINE0_1"
+	    echo -n "$LINE0_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    print_lock "-n" "$LINE1_1"
+	    echo -n "$LINE1_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    print_lock "-n" "$LINE2_1"
+	    echo -n "$LINE2_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    print_lock "-n" "$LINE3_1"
+	    echo -n "$LINE3_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    print_lock "-n" "$LINE4_1"
+	    echo -n "$LINE4_1"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    print_lock "-n" "$LINE5_1"
+	    echo -n "$LINE5_1"
 	;;
 	2)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    print_lock "-n" "$LINE0_2"
+	    echo -n "$LINE0_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    print_lock "-n" "$LINE1_2"
+	    echo -n "$LINE1_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    print_lock "-n" "$LINE2_2"
+	    echo -n "$LINE2_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    print_lock "-n" "$LINE3_2"
+	    echo -n "$LINE3_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    print_lock "-n" "$LINE4_2"
+	    echo -n "$LINE4_2"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    print_lock "-n" "$LINE5_2"
+	    echo -n "$LINE5_2"
 	;;
 	3)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    print_lock "-n" "$LINE0_3"
+	    echo -n "$LINE0_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    print_lock "-n" "$LINE1_3"
+	    echo -n "$LINE1_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    print_lock "-n" "$LINE2_3"
+	    echo -n "$LINE2_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    print_lock "-n" "$LINE3_3"
+	    echo -n "$LINE3_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    print_lock "-n" "$LINE4_3"
+	    echo -n "$LINE4_3"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    print_lock "-n" "$LINE5_3"
+	    echo -n "$LINE5_3"
 	;;
 	4)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    print_lock "-n" "$LINE0_4"
+	    echo -n "$LINE0_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    print_lock "-n" "$LINE1_4"
+	    echo -n "$LINE1_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    print_lock "-n" "$LINE2_4"
+	    echo -n "$LINE2_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    print_lock "-n" "$LINE3_4"
+	    echo -n "$LINE3_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    print_lock "-n" "$LINE4_4"
+	    echo -n "$LINE4_4"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    print_lock "-n" "$LINE5_4"
+	    echo -n "$LINE5_4"
 	;;
 	5)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    print_lock "-n" "$LINE0_5"
+	    echo -n "$LINE0_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    print_lock "-n" "$LINE1_5"
+	    echo -n "$LINE1_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    print_lock "-n" "$LINE2_5"
+	    echo -n "$LINE2_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    print_lock "-n" "$LINE3_5"
+	    echo -n "$LINE3_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    print_lock "-n" "$LINE4_5"
+	    echo -n "$LINE4_5"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    print_lock "-n" "$LINE5_5"
+	    echo -n "$LINE5_5"
 	;;
 	6)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    print_lock "-n" "$LINE0_6"
+	    echo -n "$LINE0_6"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    print_lock "-n" "$LINE1_6"
+	    echo -n "$LINE1_6"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    print_lock "-n" "$LINE2_6"
+	    echo -n "$LINE2_6"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    print_lock "-n" "$LINE3_6"
+	    echo -n "$LINE3_6"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    print_lock "-n" "$LINE4_6"
+	    echo -n "$LINE4_6"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    print_lock "-n" "$LINE5_6"
+	    echo -n "$LINE5_6"
 	;;
 	7)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-	    print_lock "-n" "$LINE0_7"
+	    echo -n "$LINE0_7"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
-	    print_lock "-n" "$LINE1_7"
+	    echo -n "$LINE1_7"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+2)) $DISPLAY_COL
-	    print_lock "-n" "$LINE2_7"
+	    echo -n "$LINE2_7"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+3)) $DISPLAY_COL
-	    print_lock "-n" "$LINE3_7"
+	    echo -n "$LINE3_7"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+4)) $DISPLAY_COL
-	    print_lock "-n" "$LINE4_7"
+	    echo -n "$LINE4_7"
 	    cm_move_cursor_to_point $((DISPLAY_LINE+5)) $DISPLAY_COL
-	    print_lock "-n" "$LINE5_7"
+	    echo -n "$LINE5_7"
 	;;
     esac
     cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
+    release_print_lock
 }
 
 # Globals
