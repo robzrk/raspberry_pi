@@ -74,22 +74,24 @@ function draw_border() {
 
 function spin_one_second() {
     local STAGE=$1
+    acquire_print_lock
     fg_yellow
     cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
     case $STAGE in
 	0)
-	    print_lock "-ne" "\b-"
+	    echo -ne "\b-"
 	    ;;
 	1)
-	    print_lock "-ne" "\b\\"
+	    echo -ne "\b\\"
 	    ;;
 	2)
-	    print_lock "-ne" "\b|"
+	    echo -ne "\b|"
 	    ;;
 	3)
-	    print_lock "-ne" "\b/"
+	    echo -ne "\b/"
 	    ;;
     esac
+    release_print_lock
     sleep 1
 }
 
@@ -131,28 +133,30 @@ function dump_basic_weather() {
 
     local DISPLAY_LINE=2
     local DISPLAY_COL=3
+    acquire_print_lock
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    print_lock "-n" "$STRING."
+    echo -n "$STRING."
     DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    print_lock "-n" "Wind: $WIND_DIR @ ${WIND_MPH}MPH"
+    echo -n "Wind: $WIND_DIR @ ${WIND_MPH}MPH"
     DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    print_lock "-n" "Humidity: ${HUMIDITY}%"
+    echo -n "Humidity: ${HUMIDITY}%"
     DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    print_lock "-n" "${TEMP}ºF"
+    echo -n "${TEMP}ºF"
     DISPLAY_LINE=$((DISPLAY_LINE+8))
     DISPLAY_COL=$((DISPLAY_COL+1))
     fg_random
+    release_print_lock
     print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
 }
 
@@ -205,13 +209,18 @@ function dump_basic_forecast() {
 
 function dump_date() {
     local DATE=`TZ='America/Chicago' date +"%A %b %d %l:%M:%S"`
+    acquire_print_lock
     clear_specified_line_keep_border $((HEIGHT-3))
     cm_move_cursor_to_point $((HEIGHT-3)) 3
     fg_cyan
-    print_lock "-n" "$DATE"
+    echo -n "$DATE"
+    release_print_lock
 }
 
 function run_loop() {
+    # Ensure lock is release from previous runs
+    release_print_lock
+
     draw_border
     xdotool mousemove 0 0
     local CURRENT_WEATHER_STRING=""
@@ -509,7 +518,7 @@ function draw_thunderstorm() {
     local DISPLAY_LINE=9
     local DISPLAY_COL=3
     local OFFSET=0
-    local LWID=$((WIDTH-4))
+    local LWID=$((WIDTH-5))
     while [ 1 ]; do
 	fg_yellow
 	show_frame $FRAME $DISPLAY_LINE $((DISPLAY_COL+OFFSET))
