@@ -258,6 +258,8 @@ function run_loop() {
 	    DE_PID=$!
 	    sleep 3
 	    continue
+	else
+	    DE_PID=0
 	fi
 
 	CURRENT_WEATHER_STRING=`extract_xml_weather "$WEATHER" weather`
