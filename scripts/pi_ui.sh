@@ -116,6 +116,7 @@ function extract_xml_forecast() {
 
 function update_weather() {
     WEATHER=`curl http://w1.weather.gov/xml/current_obs/KMSP.xml 2>/dev/null`
+    return $?
     # echo $WEATHER > weather.xml
     # WEATHER=`cat weather.xml`
     # FORECAST=`curl "http://api.openweathermap.org/data/2.5/forecast?id=5037649&mode=xml&APPID=94bd78ff32b4f3ff159847bc6f2d744a" 2>/dev/null`
@@ -130,6 +131,7 @@ function dump_basic_weather() {
     local WIND_DIR=`extract_xml_weather "$WEATHER" wind_dir`
     local WIND_MPH=`extract_xml_weather "$WEATHER" wind_mph`
     local HUMIDITY=`extract_xml_weather "$WEATHER" relative_humidity`
+    local WINDCHILL=`extract_xml_weather "$WEATHER" windchill_f`
 
     local DISPLAY_LINE=2
     local DISPLAY_COL=3
@@ -152,7 +154,11 @@ function dump_basic_weather() {
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    echo -n "${TEMP}ºF"
+    if [ "$WINDCHILL" != "$TEMP" ]; then
+	echo -n "${TEMP}ºF (${WINDCHILL}ºF windchill)"
+    else
+	echo -n "${TEMP}ºF"
+    fi
     DISPLAY_LINE=$((DISPLAY_LINE+8))
     DISPLAY_COL=$((DISPLAY_COL+1))
     fg_random
@@ -174,7 +180,7 @@ function draw_weather_aux() {
     local DISPLAY_COL=$3
 
     local CURR_HOUR=`TZ='America/Chicago' date +"%H"`
-    if [ $CURR_HOUR -gt 6 -o $CURR_HOUR -lt 20 ]; then
+    if [ $CURR_HOUR -gt 6 -a $CURR_HOUR -lt 20 ]; then
 	local IS_DAYTIME=1
     else
 	local IS_DAYTIME=0
@@ -184,6 +190,8 @@ function draw_weather_aux() {
 	draw_clouds
     elif [[ $WEATHER_STRING == *"Overcast"* ]]; then
 	draw_overcast
+    elif [[ $WEATHER_STRING == *"Snow"* ]]; then
+	draw_snow
     elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 0 ]]; then
 	draw_clear
     elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 1 ]]; then
@@ -226,6 +234,7 @@ function run_loop() {
     local CURRENT_WEATHER_STRING=""
     local PREVIOUS_WEATHER_STRING=""
     local RPNB_PID=0
+    local DE_PID=0
     local RUN_CNT=0
     while [ 1 ]; do
 	# Hack - do this until echo statements between threads can run cleanly
@@ -233,11 +242,30 @@ function run_loop() {
 	    clear
 	    draw_border
 	fi
+
+	# Update the weather, but display a connection error if there is one
+	if [ $DE_PID -ne 0 ]; then
+	    kill -9 $DE_PID
+	    echo "" # force the kill printout to happen
+	    clear
+	    draw_border
+	fi
 	update_weather
+	if [ $? -ne 0 ]; then
+	    clear
+	    draw_border
+	    draw_error &
+	    DE_PID=$!
+	    sleep 3
+	    continue
+	fi
+
 	CURRENT_WEATHER_STRING=`extract_xml_weather "$WEATHER" weather`
 	if [ "$CURRENT_WEATHER_STRING" != "$PREVIOUS_WEATHER_STRING" ]; then
 	    if [ $RPNB_PID -ne 0 ]; then
-		(kill -9 $RPNB_PID)
+		kill -9 $RPNB_PID
+		echo "" # force the kill printout to happen
+		clear
 	    fi
     	    run_pass_non_blocking &
 	    RPNB_PID=$!
@@ -292,6 +320,30 @@ function draw_clouds() {
     done
 }
 
+function draw_error() {
+    LINE0="                                "
+    LINE1="                                "  
+    LINE2=" Connection Error.              "
+    LINE3="                                "
+    LINE4="                                "
+    LINE5="                                "
+
+    local OFFSET=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    local LWID=$((WIDTH-5))
+    while [ 1 ]; do
+	fg_light_gray
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	sleep 1
+	OFFSET=$((OFFSET+1))
+	if [ $OFFSET -gt $LWID ]; then
+	    OFFSET=0
+	fi
+    done
+}
+
+
 function draw_overcast() {
     LINE0="  -     _            -    _    -"
     LINE1="-   -           -           _   "  
@@ -345,30 +397,30 @@ function draw_sunny() {
     LINE5_3="          /    |    \           "
 
     LINE0_4="          '  _____  '           "
-    LINE1_4="            /     \             "
+    LINE1_4="            / .   \             "
     LINE2_4="       _   /       \   _        "
     LINE3_4="       _   \       /   _        "
     LINE4_4="            \_____/             "
     LINE5_4="         .     .     .          "
 
     LINE0_5="             _____              "
-    LINE1_5="            /     \             "
+    LINE1_5="            / . . \             "
     LINE2_5="    _      /       \      _     "
-    LINE3_5="    _      \       /      _     "
+    LINE3_5="    _      \ \     /      _     "
     LINE4_5="            \_____/             "
     LINE5_5="                                "
 
     LINE0_6="             _____              "
-    LINE1_6="            /     \             "
+    LINE1_6="            / . . \             "
     LINE2_6="_          /       \           _"
-    LINE3_6="_          \       /           _"
+    LINE3_6="_          \ \__   /           _"
     LINE4_6="            \_____/             "
     LINE5_6="                                "
     
     LINE0_7="             _____              "
-    LINE1_7="            /     \             "
+    LINE1_7="            / . . \             "
     LINE2_7="           /       \            "
-    LINE3_7="           \       /            "
+    LINE3_7="           \ \___/ /            "
     LINE4_7="            \_____/             "
     LINE5_7="                                "
 
@@ -482,6 +534,53 @@ function draw_clear() {
 	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
 	sleep 2
 	FRAME=$((RANDOM % 6))
+    done
+}
+
+function draw_snow() {
+    LINE0_0="_--__-----_---_____-_---____---_"
+    LINE1_0="  *   *       *      *    *   * "
+    LINE2_0="  *    *       *           *  * "
+    LINE3_0=" *   *     *   *   * *   *      "
+    LINE4_0="    * *      *                * "
+    LINE5_0="         *       *    *      *  "
+    
+    LINE0_1="_--__-----_---_____-_---____---_"
+    LINE1_1="         *       *    *      *  "
+    LINE2_1="  *   *       *      *    *   * "
+    LINE3_1="  *    *       *           *  * "
+    LINE4_1=" *   *     *   *   * *   *      "
+    LINE5_1="    * *      *                * "
+    
+    LINE0_2="_--__-----_---_____-_---____---_"
+    LINE1_2="    * *      *                * "
+    LINE2_2="         *       *    *      *  "
+    LINE3_2="  *   *       *      *    *   * "
+    LINE4_2="  *    *       *           *  * "
+    LINE5_2=" *   *     *   *   * *   *      "
+    
+    LINE0_3="_--__-----_---_____-_---____---_"
+    LINE1_3=" *   *     *   *   * *   *      "
+    LINE2_3="    * *      *                * "
+    LINE3_3="         *       *    *      *  "
+    LINE4_3="  *   *       *      *    *   * "
+    LINE5_3="  *    *       *           *  * "
+    
+    LINE0_4="_--__-----_---_____-_---____---_"
+    LINE1_4="  *    *       *           *  * "
+    LINE2_4=" *   *     *   *   * *   *      "
+    LINE3_4="    * *      *                * "
+    LINE4_4="         *       *    *      *  "
+    LINE5_4="  *   *       *      *    *   * "
+    
+    local FRAME=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    while [ 1 ]; do
+	fg_white
+	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
+	sleep 1
+	FRAME=$(((FRAME+1)%5))
     done
 }
 
