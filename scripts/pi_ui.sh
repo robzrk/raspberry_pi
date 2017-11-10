@@ -95,10 +95,16 @@ function spin_one_second() {
     sleep 1
 }
 
-function extract_xml_weather() {
+function extract_xml_value() {
     local XML=$1
     local TAG=$2
     echo "$XML" | grep "<$TAG>" | sed "s/.*<$TAG>\(.*\)<\/$TAG>.*/\1/"
+}
+
+function extract_json_value() {
+    local JSON=$1
+    local NAME=$2
+    echo "$JSON" | grep "\"$NAME\":" | sed "s/.*\"${NAME}\":\"\([^,]*\)\".*/\1/"
 }
 
 function extract_xml_forecast() {
@@ -124,14 +130,19 @@ function update_weather() {
     # FORECAST=`cat forecast.xml`
 }
 
+function update_sunset() {
+    SUNSET=`curl https://api.sunrise-sunset.org/json?lat=44.97\&lng=-93.25&date=today 2>/dev/null`
+    return $?
+}
+
 function dump_basic_weather() {
-    local TEMP=`extract_xml_weather "$WEATHER" temp_f`
+    local TEMP=`extract_xml_value "$WEATHER" temp_f`
     #TEMP=`echo $TEMP | sed "s/\([0-9]*\).*/\1/g"`
-    local STRING=`extract_xml_weather "$WEATHER" weather`
-    local WIND_DIR=`extract_xml_weather "$WEATHER" wind_dir`
-    local WIND_MPH=`extract_xml_weather "$WEATHER" wind_mph`
-    local HUMIDITY=`extract_xml_weather "$WEATHER" relative_humidity`
-    local WINDCHILL=`extract_xml_weather "$WEATHER" windchill_f`
+    local STRING=`extract_xml_value "$WEATHER" weather`
+    local WIND_DIR=`extract_xml_value "$WEATHER" wind_dir`
+    local WIND_MPH=`extract_xml_value "$WEATHER" wind_mph`
+    local HUMIDITY=`extract_xml_value "$WEATHER" relative_humidity`
+    local WINDCHILL=`extract_xml_value "$WEATHER" windchill_f`
 
     local DISPLAY_LINE=2
     local DISPLAY_COL=3
@@ -167,7 +178,7 @@ function dump_basic_weather() {
 }
 
 function draw_weather() {
-    local STRING=`extract_xml_weather "$WEATHER" weather`
+    local STRING=`extract_xml_value "$WEATHER" weather`
     
     local DISPLAY_LINE=9
     local DISPLAY_COL=$((OFFSET + 3))
@@ -179,8 +190,14 @@ function draw_weather_aux() {
     local DISPLAY_LINE=$2
     local DISPLAY_COL=$3
 
-    local CURR_HOUR=`TZ='America/Chicago' date +"%H"`
-    if [ $CURR_HOUR -gt 6 -a $CURR_HOUR -lt 20 ]; then
+    local SUNSET_TIME=`extract_json_value "$SUNSET" sunset`
+    SUNSET_TIME_FMT=`echo $SUNSET_TIME | sed "s/://g" | head -c 4`
+    SUNSET_TIME_FMT=$(( SUNSET_TIME_FMT + 1200 ))
+    SUNSET_TIME_FMT=`echo ${SUNSET_TIME_FMT:0:2}:${SUNSET_TIME_FMT:2:4}`
+    SUNSET_TIME_PRINT=`env TZ='America/Chicago' date -d "$SUNSET_TIME_FMT UTC" +"%H%M"`
+
+    local CURR_TIME=`TZ='America/Chicago' date +"%H%M"`
+    if [ $CURR_TIME -le $SUNSET_TIME_PRINT ]; then
 	local IS_DAYTIME=1
     else
 	local IS_DAYTIME=0
@@ -261,8 +278,9 @@ function run_loop() {
 	else
 	    DE_PID=0
 	fi
+	update_sunset
 
-	CURRENT_WEATHER_STRING=`extract_xml_weather "$WEATHER" weather`
+	CURRENT_WEATHER_STRING=`extract_xml_value "$WEATHER" weather`
 	if [ "$CURRENT_WEATHER_STRING" != "$PREVIOUS_WEATHER_STRING" ]; then
 	    if [ $RPNB_PID -ne 0 ]; then
 		kill -9 $RPNB_PID
