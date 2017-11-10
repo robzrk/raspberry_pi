@@ -121,7 +121,7 @@ function extract_xml_forecast() {
 }
 
 function update_weather() {
-    WEATHER=`curl http://w1.weather.gov/xml/current_obs/KMSP.xml 2>/dev/null`
+    WEATHER=`curl -s http://w1.weather.gov/xml/current_obs/KMSP.xml`
     return $?
     # echo $WEATHER > weather.xml
     # WEATHER=`cat weather.xml`
@@ -131,11 +131,8 @@ function update_weather() {
 }
 
 function update_sunset() {
-    SUNSET=`curl https://api.sunrise-sunset.org/json?lat=44.97\&lng=-93.25&date=today 2>/dev/null`
-    local RETVAL=$?
-    clear
-    draw_border
-    return $RETVAL
+    SUNSET=`curl -s https://api.sunrise-sunset.org/json?lat=44.97\&lng=-93.25&date=today`
+    return $?
 }
 
 function dump_basic_weather() {
@@ -271,6 +268,8 @@ function run_loop() {
 	fi
 	update_weather
 	if [ $? -ne 0 ]; then
+	    kill -9 $RPNB_PID
+	    echo "" # force the kill printout to happen
 	    clear
 	    draw_border
 	    draw_error &
