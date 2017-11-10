@@ -165,10 +165,10 @@ function dump_basic_weather() {
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_random
-    if [ "$WINDCHILL" != "$TEMP" ]; then
-	echo -n "${TEMP}ºF (${WINDCHILL}ºF windchill)"
-    else
+    if [[ ( "$WINDCHILL" == "$TEMP" ) || ( "$WINDCHILL" == "" ) ]]; then
 	echo -n "${TEMP}ºF"
+    else
+	echo -n "${TEMP}ºF (${WINDCHILL}ºF windchill)"
     fi
     DISPLAY_LINE=$((DISPLAY_LINE+8))
     DISPLAY_COL=$((DISPLAY_COL+1))
