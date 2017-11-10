@@ -132,7 +132,10 @@ function update_weather() {
 
 function update_sunset() {
     SUNSET=`curl https://api.sunrise-sunset.org/json?lat=44.97\&lng=-93.25&date=today 2>/dev/null`
-    return $?
+    local RETVAL=$?
+    clear
+    draw_border
+    return $RETVAL
 }
 
 function dump_basic_weather() {
@@ -191,13 +194,12 @@ function draw_weather_aux() {
     local DISPLAY_COL=$3
 
     local SUNSET_TIME=`extract_json_value "$SUNSET" sunset`
-    SUNSET_TIME_FMT=`echo $SUNSET_TIME | sed "s/://g" | head -c 4`
+    local SUNSET_TIME_FMT=`echo $SUNSET_TIME | sed "s/://g" | head -c 4`
     SUNSET_TIME_FMT=$(( SUNSET_TIME_FMT + 1200 ))
     SUNSET_TIME_FMT=`echo ${SUNSET_TIME_FMT:0:2}:${SUNSET_TIME_FMT:2:4}`
-    SUNSET_TIME_PRINT=`env TZ='America/Chicago' date -d "$SUNSET_TIME_FMT UTC" +"%H%M"`
-
+    local SUNSET_TIME_CMP=`env TZ='America/Chicago' date -d "$SUNSET_TIME_FMT UTC" +"%H%M"`
     local CURR_TIME=`TZ='America/Chicago' date +"%H%M"`
-    if [ $CURR_TIME -le $SUNSET_TIME_PRINT ]; then
+    if [ $CURR_TIME -le $SUNSET_TIME_CMP ]; then
 	local IS_DAYTIME=1
     else
 	local IS_DAYTIME=0
@@ -317,6 +319,29 @@ function run_pass_non_blocking() {
 # Draw functions
 ################################################################################
 
+function draw_error() {
+    LINE0="                                "
+    LINE1="                                "
+    LINE2=" Connection Error.              "
+    LINE3="                                "
+    LINE4="                                "
+    LINE5="                                "
+
+    local OFFSET=0
+    local DISPLAY_LINE=9
+    local DISPLAY_COL=3
+    local LWID=$((WIDTH-5))
+    while [ 1 ]; do
+	fg_light_gray
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	sleep 1
+	OFFSET=$((OFFSET+1))
+	if [ $OFFSET -gt $LWID ]; then
+	    OFFSET=0
+	fi
+    done
+}
+
 function draw_clouds() {
     LINE0="      _____              ______ "
     LINE1="     (_____) __    ___  (______)"
@@ -339,30 +364,6 @@ function draw_clouds() {
 	fi
     done
 }
-
-function draw_error() {
-    LINE0="                                "
-    LINE1="                                "  
-    LINE2=" Connection Error.              "
-    LINE3="                                "
-    LINE4="                                "
-    LINE5="                                "
-
-    local OFFSET=0
-    local DISPLAY_LINE=9
-    local DISPLAY_COL=3
-    local LWID=$((WIDTH-5))
-    while [ 1 ]; do
-	fg_light_gray
-	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
-	sleep 1
-	OFFSET=$((OFFSET+1))
-	if [ $OFFSET -gt $LWID ]; then
-	    OFFSET=0
-	fi
-    done
-}
-
 
 function draw_overcast() {
     LINE0="  -     _            -    _    -"
@@ -552,7 +553,7 @@ function draw_clear() {
     while [ 1 ]; do
 	fg_white
 	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
-	sleep 2
+	sleep 4
 	FRAME=$((RANDOM % 6))
     done
 }
@@ -637,7 +638,7 @@ function draw_thunderstorm() {
     local DISPLAY_LINE=9
     local DISPLAY_COL=3
     local OFFSET=0
-    local LWID=$((WIDTH-5))
+    local LWID=$((WIDTH-7))
     while [ 1 ]; do
 	fg_yellow
 	show_frame $FRAME $DISPLAY_LINE $((DISPLAY_COL+OFFSET))
