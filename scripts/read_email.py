@@ -16,6 +16,7 @@ _photo_path = '%s/daily_photo' % _script_dir
 _text_path = '%s/daily_text' % _script_dir
 _log_path = '%s/read_email.log' % _script_dir
 _config_path = '%s/../etc/email_addr_config.ini' % _script_dir
+_dl_email_info_path = '%s/../etc/downloaded_email.ini' % _script_dir
 
 def setup():
     global dayofweek
@@ -36,8 +37,7 @@ def setup():
     config.sections()
     config.read(_config_path)
     logging.info('read in configfile: %s', _config_path)
-
-
+    
 def get_todays_group_emails():
     todays_group = config['day_assignments'][dayofweek]
     group_email_addrs = []
@@ -100,60 +100,89 @@ def read_emails():
         logging.info('Selected photo email (uid %d) sent %s',
                      target_photo_uid, most_recent_photo_date)
 
-        # Download target messages in full
-        if (target_text_uid):
+        dl_email_info = configparser.ConfigParser()
+        dl_email_info.sections()
+        dl_email_info.read(_dl_email_info_path)
+        logging.info('read in dl_email_info: %s', _dl_email_info_path)
+        current_text_email = int(dl_email_info['email_uids']['text_email'])
+        current_photo_email = int(dl_email_info['email_uids']['photo_email'])
+
+        # Download and parse text messages in full
+        if (current_text_email == target_text_uid):
+            logging.info('Already have current text email...')
+        else: 
             logging.info('Downloading text email...')
-            text_email = client.fetch(target_text_uid, 'RFC822')
-        if (target_photo_uid):
+            try:
+                extract_text_from_email(client.fetch(target_text_uid, 'RFC822'))
+            except:
+                logging.warn('Failed downloading text email!')
+                return
+            # Update config with new uid
+            dl_email_info.set('email_uids', 'text_email',
+                              '%d' % target_text_uid)
+            with open(_dl_email_info_path, "w+") as dl_email_configfile:
+                dl_email_info.write(dl_email_configfile)
+                
+        # Download and parse text messages in full
+        if (current_photo_email == target_photo_uid):
+            logging.info('Already have current photo email...')
+        else: 
             logging.info('Downloading photo email...')
             try:
-                photo_email = client.fetch(target_photo_uid, 'RFC822')
+                extract_photo_from_email(
+                    client.fetch(target_photo_uid, 'RFC822'),
+                    most_recent_photo_date > most_recent_text_date)
             except:
                 logging.warn('Failed downloading photo email!')
+                return
+            # Update config with new uid
+            dl_email_info.set('email_uids', 'photo_email',
+                              '%d' % target_photo_uid)
+            with open(_dl_email_info_path, "w+") as dl_email_configfile:
+                dl_email_info.write(dl_email_configfile)
 
-        # Parse text email - should just have one item in text_email
-        for uid, message_data in text_email.items():
-            email_message = email.message_from_string(message_data['RFC822'])
-            from_address = re.sub('[<>]', '',
-                                  email_message.get('From').split(" ")[-1])
-            logging.info('Parsing email from: %s', from_address)
-            logging.info('Sent: %s', email_message.get('Date'))
+                
+def extract_text_from_email(target_emails):
+    # Parse text email - should just have one item in text_email
+    for uid, message_data in target_emails.items():
+        email_message = email.message_from_string(message_data['RFC822'])
+        from_address = re.sub('[<>]', '',
+                              email_message.get('From').split(" ")[-1])
+        logging.info('Parsing email from: %s', from_address)
+        logging.info('Sent: %s', email_message.get('Date'))
 
-            # Generate daily_text or daily_photo files for this email
-            for part in email_message.walk():
-                if part.get_content_type() == 'text/plain':
-                    message_text = part.get_payload()
-                    message_text_parsed = re.sub('[ \n]', '',
-                                                 message_text)
-                    if len(message_text_parsed) > 1:
-                        logging.info(' ** Found message text!')
-                        open(_text_path, 'wb').write(message_text)
+        # Generate daily_text file
+        for part in email_message.walk():
+            if part.get_content_type() == 'text/plain':
+                message_text = part.get_payload()
+                message_text_parsed = re.sub('[ \n]', '',
+                                             message_text)
+                if len(message_text_parsed) > 1:
+                    logging.info(' ** Found message text!')
+                    open(_text_path, 'wb').write(message_text)
 
-        # Parse photo email - should just have one item in photo_email
-        for uid, message_data in photo_email.items():
-            email_message = email.message_from_string(message_data['RFC822'])
-            from_address = re.sub('[<>]', '',
-                                  email_message.get('From').split(" ")[-1])
-            logging.info('Parsing email from: %s', from_address)
-            logging.info('Sent: %s', email_message.get('Date'))
-
-            # Generate daily_text or daily_photo files for this email
-            for part in email_message.walk():
-                # If the photo email has text as well, use it, unless the
-                #  text email was more recent
-                if part.get_content_type() == 'text/plain':
-                    message_text = part.get_payload()
-                    message_text_parsed = re.sub('[ \n]', '',
-                                                 message_text)
-                    if len(message_text_parsed) > 1:
-                        if (most_recent_photo_date > most_recent_text_date):
-                            logging.info(' ** Found photo message text!')
-                            open(_text_path, 'wb').write(message_text)
-                if part.get_content_type() == 'image/jpeg' or \
-                   part.get_content_type() == 'image/png':
-                    logging.info(' ** Found photo!')
-                    open(_photo_path, 'wb').write(
-                        part.get_payload(decode=True))
+def extract_photo_from_email(target_emails, use_text_if_found):
+    # Parse photo email - should just have one item in photo_email
+    for uid, message_data in target_emails.items():
+        email_message = email.message_from_string(message_data['RFC822'])
+        from_address = re.sub('[<>]', '',
+                              email_message.get('From').split(" ")[-1])
+        logging.info('Parsing email from: %s', from_address)
+        logging.info('Sent: %s', email_message.get('Date'))
+        
+        # Generate daily_text or daily_photo files for this email
+        for part in email_message.walk():
+            if part.get_content_type() == 'image/jpeg' or \
+               part.get_content_type() == 'image/png':
+                logging.info(' ** Found photo!')
+                open(_photo_path, 'wb').write(part.get_payload(decode=True))
+            if use_text_if_found and part.get_content_type() == 'text/plain':
+                message_text = part.get_payload()
+                message_text_parsed = re.sub('[ \n]', '',
+                                             message_text)
+                if len(message_text_parsed) > 1:
+                    logging.info(' ** Found message text!')
+                    open(_text_path, 'wb').write(message_text)
 
 # Read in photo height and scale it down, in place, to target height
 def resize_photo():
@@ -178,6 +207,6 @@ def teardown():
 
 # main
 setup()
-#read_emails()
+read_emails()
 resize_photo()
 teardown()
