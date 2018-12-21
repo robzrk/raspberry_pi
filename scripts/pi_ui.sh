@@ -30,17 +30,21 @@ function get_width() {
 }
 
 function ctrl_c() {
+    kill -9 $DDT_PID
     print_lock_cleanup
     fg_default
+    bg_default
     print_lock_cleanup
     cm_move_cursor_to_point $HEIGHT 0
     print_lock_cleanup
     exit 0
 }
 
+# This function can only be called when lock is already held
 function clear_specified_line_keep_border() {
     local L=$1
     fg_light_purple
+    bg_default
     cm_clear_specified_line $L 0
     cm_move_cursor_to_point $L 0
     echo -n "*"
@@ -51,6 +55,7 @@ function clear_specified_line_keep_border() {
 function draw_border() {
     acquire_print_lock
     fg_light_purple
+    bg_default
     cm_move_cursor_to_point 0 0
     cm_clear_screen
     local LINE=1
@@ -121,7 +126,7 @@ function extract_xml_forecast() {
 }
 
 function update_weather() {
-    WEATHER=`curl -s http://w1.weather.gov/xml/current_obs/KMSP.xml`
+    WEATHER=`curl -s https://w1.weather.gov/xml/current_obs/KMSP.xml`
     return $?
     # echo $WEATHER > weather.xml
     # WEATHER=`cat weather.xml`
@@ -137,44 +142,93 @@ function update_sunset() {
 
 function dump_basic_weather() {
     local TEMP=`extract_xml_value "$WEATHER" temp_f`
-    #TEMP=`echo $TEMP | sed "s/\([0-9]*\).*/\1/g"`
+    local TEMP=`echo $TEMP | sed "s/\([0-9]*\).*/\1/g"`
     local STRING=`extract_xml_value "$WEATHER" weather`
     local WIND_DIR=`extract_xml_value "$WEATHER" wind_dir`
     local WIND_MPH=`extract_xml_value "$WEATHER" wind_mph`
     local HUMIDITY=`extract_xml_value "$WEATHER" relative_humidity`
     local WINDCHILL=`extract_xml_value "$WEATHER" windchill_f`
+    local WINDCHILL=`echo $WINDCHILL | sed "s/\([0-9]*\).*/\1/g"`
+    local COLOR_TEMP=$TEMP
+    if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
+	local COLOR_TEMP=$WINDCHILL
+    fi
 
     local DISPLAY_LINE=2
     local DISPLAY_COL=3
     acquire_print_lock
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    fg_random
+    bg_default
+    fg_color_from_temp $COLOR_TEMP
     echo -n "$STRING."
-    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    local DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    fg_random
+    bg_default
+    fg_color_from_temp $COLOR_TEMP
     echo -n "Wind: $WIND_DIR @ ${WIND_MPH}MPH"
-    DISPLAY_LINE=$((DISPLAY_LINE+2))
+    local DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    fg_random
+    bg_default
+    fg_color_from_temp $COLOR_TEMP
     echo -n "Humidity: ${HUMIDITY}%"
-    DISPLAY_LINE=$((DISPLAY_LINE+2))
-    clear_specified_line_keep_border $DISPLAY_LINE
-    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    fg_random
-    if [[ ( "$WINDCHILL" == "$TEMP" ) || ( "$WINDCHILL" == "" ) ]]; then
-	echo -n "${TEMP}ºF"
+    local DISPLAY_LINE=$((DISPLAY_LINE+12))
+    if [ $TEMP -ge 100 ]; then
+	local DISPLAY_COL=5
     else
-	echo -n "${TEMP}ºF (${WINDCHILL}ºF windchill)"
+	local DISPLAY_COL=10
     fi
-    DISPLAY_LINE=$((DISPLAY_LINE+8))
-    DISPLAY_COL=$((DISPLAY_COL+1))
-    fg_random
-    release_print_lock
+    bg_default
+    fg_color_from_temp $COLOR_TEMP
     print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
+    if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
+	local DISPLAY_LINE=$((DISPLAY_LINE+8))
+	local DISPLAY_COL=12
+	clear_specified_line_keep_border $DISPLAY_LINE
+	cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+	bg_default
+	fg_color_from_temp $COLOR_TEMP
+	echo -n "${WINDCHILL}ºF windchill"
+    fi
+    release_print_lock
+}
+
+function fg_color_from_temp()
+{
+    local TEMP=$1
+    if [ $TEMP -ge 110 ]; then
+	fg_light_red
+    elif [ $TEMP -ge 100 ]; then
+	fg_red
+    elif [ $TEMP -ge 90 ]; then
+	fg_brown
+    elif [ $TEMP -ge 80 ]; then
+	fg_yellow
+    elif [ $TEMP -ge 70 ]; then
+	fg_light_green
+    elif [ $TEMP -ge 60 ]; then
+	fg_green
+    elif [ $TEMP -ge 50 ]; then
+	fg_light_cyan
+    elif [ $TEMP -ge 40 ]; then
+	fg_cyan
+    elif [ $TEMP -ge 30 ]; then
+	fg_light_blue
+    elif [ $TEMP -ge 20 ]; then
+	fg_blue
+    elif [ $TEMP -ge 10 ]; then
+	fg_white
+    elif [ $TEMP -ge 0 ]; then
+	fg_light_purple
+    elif [ $TEMP -ge -10 ]; then
+	fg_purple
+    elif [ $TEMP -ge -20 ]; then
+	fg_light_gray
+    else
+	fg_dark_gray
+    fi
 }
 
 function draw_weather() {
@@ -201,7 +255,7 @@ function draw_weather_aux() {
     else
 	local IS_DAYTIME=0
     fi
-
+    
     if [[ $WEATHER_STRING == *"Cloud"* ]]; then
 	draw_clouds
     elif [[ $WEATHER_STRING == *"Overcast"* ]]; then
@@ -225,11 +279,34 @@ function dump_basic_forecast() {
     local TEMP=`extract_xml_forecast "$FORECAST" time from`
     local DISPLAY_LINE=2
     local DISPLAY_COL=3
+    acquire_print_lock
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    fg_random
+    release_print_lock
     print_lock "-n" "${TEMP}"
 }
 
+function start_daily_text_display() {
+    display_daily_text &
+    DDT_PID=$!
+}
+
+function display_daily_text() {
+    local OFFSET=0
+    local DISPLAY_LINE=28
+    local DISPLAY_COL=3
+    local LWID=$((WIDTH-5))
+    local MESSAGE_IN=`cat $SCRIPTS_DIR/daily_text | tr -d '\r' | tr -d '\n'`
+    MESSAGE="${MESSAGE_IN}     "
+    local MSG_LEN=${#MESSAGE}
+    while [ 1 ]; do
+	scroll_message $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	sleep .1
+	local OFFSET=$((OFFSET+1))
+	if [ $OFFSET -gt $MSG_LEN ]; then
+	    local OFFSET=0
+	fi
+    done
+}
 
 function dump_date() {
     local DATE=`TZ='America/Chicago' date +"%A %b %d %l:%M:%S"`
@@ -237,6 +314,7 @@ function dump_date() {
     clear_specified_line_keep_border $((HEIGHT-3))
     cm_move_cursor_to_point $((HEIGHT-3)) 3
     fg_cyan
+    bg_default
     echo -n "$DATE"
     release_print_lock
 }
@@ -247,6 +325,7 @@ function run_loop() {
 
     draw_border
     xdotool mousemove 0 0
+    start_daily_text_display
     local CURRENT_WEATHER_STRING=""
     local PREVIOUS_WEATHER_STRING=""
     local RPNB_PID=0
@@ -263,6 +342,7 @@ function run_loop() {
 	if [ $DE_PID -ne 0 ]; then
 	    kill -9 $DE_PID
 	    echo "" # force the kill printout to happen
+	    usleep 5000
 	    clear
 	    draw_border
 	fi
@@ -270,6 +350,7 @@ function run_loop() {
 	if [ $? -ne 0 ]; then
 	    kill -9 $RPNB_PID
 	    echo "" # force the kill printout to happen
+	    usleep 5000
 	    clear
 	    draw_border
 	    draw_error &
@@ -286,6 +367,7 @@ function run_loop() {
 	    if [ $RPNB_PID -ne 0 ]; then
 		kill -9 $RPNB_PID
 		echo "" # force the kill printout to happen
+		usleep 5000
 		clear
 	    fi
     	    run_pass_non_blocking &
@@ -302,11 +384,9 @@ function run_pass_blocking() {
     dump_basic_weather
     # dump_basic_forecast
     # exit 0
-    local STAGE=0
     for i in {1..15}; do
 	dump_date
-	spin_one_second $STAGE
-	STAGE=$(((STAGE+1)%4))
+	sleep 1
     done
 }
 
@@ -327,16 +407,15 @@ function draw_error() {
     LINE5="                                "
 
     local OFFSET=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-	fg_light_gray
-	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID fg_light_gray bg_default
 	sleep 1
-	OFFSET=$((OFFSET+1))
+	local OFFSET=$((OFFSET+1))
 	if [ $OFFSET -gt $LWID ]; then
-	    OFFSET=0
+	    local OFFSET=0
 	fi
     done
 }
@@ -350,16 +429,15 @@ function draw_clouds() {
     LINE5="  (______)                 (_)  "
 
     local OFFSET=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-	fg_white
-	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID fg_white bg_default
 	sleep 1
-	OFFSET=$((OFFSET+1))
+	local OFFSET=$((OFFSET+1))
 	if [ $OFFSET -gt $LWID ]; then
-	    OFFSET=0
+	    local OFFSET=0
 	fi
     done
 }
@@ -373,16 +451,15 @@ function draw_overcast() {
     LINE5="                                "
 
     local OFFSET=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-	fg_light_gray
-	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID fg_light_gray bg_default
 	sleep 1
-	OFFSET=$((OFFSET+1))
+	local OFFSET=$((OFFSET+1))
 	if [ $OFFSET -gt $LWID ]; then
-	    OFFSET=0
+	    local OFFSET=0
 	fi
     done
 }
@@ -446,114 +523,111 @@ function draw_sunny() {
 
     
     local FRAME=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     while [ 1 ]; do
-	fg_yellow
-	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
+	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL fg_yellow
 	sleep .3
-	FRAME=$(((FRAME+1)%8))
+	local FRAME=$(((FRAME+1)%8))
     done
 }
 
 function draw_rain() {
     LINE0_0="_--__-----_---_____-_---____---_"
     LINE1_0="  \   \       \      \    \   \ "
-    LINE2_0="  \    \       \           \  \ "
-    LINE3_0=" \   \     \   \   \ \   \      "
-    LINE4_0="    \ \      \                \ "
-    LINE5_0="         \       \    \      \  "
+    LINE2_0="   \    \       \           \  \ "
+    LINE3_0="   \   \     \   \   \ \   \    "
+    LINE4_0="\      \ \      \               "
+    LINE5_0="             \       \    \     "
     
     LINE0_1="_--__-----_---_____-_---____---_"
     LINE1_1="         \       \    \      \  "
-    LINE2_1="  \   \       \      \    \   \ "
-    LINE3_1="  \    \       \           \  \ "
-    LINE4_1=" \   \     \   \   \ \   \      "
-    LINE5_1="    \ \      \                \ "
+    LINE2_1="   \   \       \      \    \   \ "
+    LINE3_1="    \    \       \           \  "
+    LINE4_1="    \   \     \   \   \ \   \   "
+    LINE5_1=" \      \ \      \              "
     
     LINE0_2="_--__-----_---_____-_---____---_"
     LINE1_2="    \ \      \                \ "
-    LINE2_2="         \       \    \      \  "
-    LINE3_2="  \   \       \      \    \   \ "
-    LINE4_2="  \    \       \           \  \ "
-    LINE5_2=" \   \     \   \   \ \   \      "
+    LINE2_2="          \       \    \      \ "
+    LINE3_2="\   \   \       \      \    \   "
+    LINE4_2="     \    \       \           \ "
+    LINE5_2="     \   \     \   \   \ \   \  "
     
     LINE0_3="_--__-----_---_____-_---____---_"
     LINE1_3=" \   \     \   \   \ \   \      "
-    LINE2_3="    \ \      \                \ "
-    LINE3_3="         \       \    \      \  "
-    LINE4_3="  \   \       \      \    \   \ "
-    LINE5_3="  \    \       \           \  \ "
+    LINE2_3="     \ \      \                \ "
+    LINE3_3="           \       \    \      \ "
+    LINE4_3=" \   \   \       \      \    \  "
+    LINE5_3="      \    \       \           \ "
     
     LINE0_4="_--__-----_---_____-_---____---_"
     LINE1_4="  \    \       \           \  \ "
-    LINE2_4=" \   \     \   \   \ \   \      "
-    LINE3_4="    \ \      \                \ "
-    LINE4_4="         \       \    \      \  "
-    LINE5_4="  \   \       \      \    \   \ "
+    LINE2_4="  \   \     \   \   \ \   \     "
+    LINE3_4="      \ \      \                "
+    LINE4_4="            \       \    \      "
+    LINE5_4="  \   \   \       \      \    \ "
     
     local FRAME=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     while [ 1 ]; do
-	fg_blue
-	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
+	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL fg_blue
 	sleep 1
-	FRAME=$(((FRAME+1)%5))
+	local FRAME=$(((FRAME+1)%5))
     done
 }
 
 function draw_clear() {
-    LINE0_0="            *        *          "
-    LINE1_0="  *            *      *        *"
-    LINE2_0="                         *      "
-    LINE3_0="          *                     "
-    LINE4_0="    *                           "
-    LINE5_0="                 *     *        "
+    LINE0_0="            .        .          "
+    LINE1_0="  .            .      .        ."
+    LINE2_0="                         .      "
+    LINE3_0="          .                     "
+    LINE4_0="    .                           "
+    LINE5_0="                 .     .        "
 
-    LINE0_1="            *             *     "
-    LINE1_1="  *            *      *        *"
-    LINE2_1="      *                  *      "
-    LINE3_1="          *                     "
-    LINE4_1="                             *  "
-    LINE5_1="                 *     *        "
+    LINE0_1="            .             .     "
+    LINE1_1="  .            .      .        ."
+    LINE2_1="      .                  .      "
+    LINE3_1="          .                     "
+    LINE4_1="                             .  "
+    LINE5_1="                 .     .        "
 
-    LINE0_2="            *             *     "
-    LINE1_2="                      *        *"
-    LINE2_2="      *                         "
-    LINE3_2="          *         *           "
-    LINE4_2="    *                        *  "
-    LINE5_2="                       *        "
+    LINE0_2="            .             .     "
+    LINE1_2="                      .        ."
+    LINE2_2="      .                         "
+    LINE3_2="          .         .           "
+    LINE4_2="    .                        .  "
+    LINE5_2="                       .        "
 
-    LINE0_3="            *             *     "
-    LINE1_3="  *            *      *         "
-    LINE2_3="      *                  *      "
-    LINE3_3="          *         *           "
-    LINE4_3="    *                        *  "
-    LINE5_3="                 *              "
+    LINE0_3="            .             .     "
+    LINE1_3="  .            .      .         "
+    LINE2_3="      .                  .      "
+    LINE3_3="          .         .           "
+    LINE4_3="    .                        .  "
+    LINE5_3="                 .              "
 
-    LINE0_4="            *        *    *     "
-    LINE1_4="  *            *               *"
-    LINE2_4="                         *      "
-    LINE3_4="          *         *           "
-    LINE4_4="    *                        *  "
-    LINE5_4="                       *        "
+    LINE0_4="            .        .    .     "
+    LINE1_4="  .            .               ."
+    LINE2_4="                         .      "
+    LINE3_4="          .         .           "
+    LINE4_4="    .                        .  "
+    LINE5_4="                       .        "
 
-    LINE0_5="                          *     "
-    LINE1_5="  *            *      *        *"
-    LINE2_5="      *                  *      "
+    LINE0_5="                          .     "
+    LINE1_5="  .            .      .        ."
+    LINE2_5="      .                  .      "
     LINE3_5="                                "
-    LINE4_5="    *                        *  "
-    LINE5_5="                 *     *        "
+    LINE4_5="    .                        .  "
+    LINE5_5="                 .     .        "
 
     local FRAME=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     while [ 1 ]; do
-	fg_white
-	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
+	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL fg_white
 	sleep 4
-	FRAME=$((RANDOM % 6))
+	local FRAME=$((RANDOM % 6))
     done
 }
 
@@ -594,13 +668,12 @@ function draw_snow() {
     LINE5_4="  *   *       *      *    *   * "
     
     local FRAME=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     while [ 1 ]; do
-	fg_white
-	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL
+	show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL fg_white
 	sleep 1
-	FRAME=$(((FRAME+1)%5))
+	local FRAME=$(((FRAME+1)%5))
     done
 }
 
@@ -634,21 +707,20 @@ function draw_thunderstorm() {
     LINE5_3=""
 
     local FRAME=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     local OFFSET=0
     local LWID=$((WIDTH-7))
     while [ 1 ]; do
-	fg_yellow
-	show_frame $FRAME $DISPLAY_LINE $((DISPLAY_COL+OFFSET))
+	show_frame $FRAME $DISPLAY_LINE $((DISPLAY_COL+OFFSET)) fg_yellow
 	sleep 0.2
-	FRAME=$((RANDOM % 20))
-	OFFSET=$((RANDOM % LWID))
+	local FRAME=$((RANDOM % 20))
+	local OFFSET=$((RANDOM % LWID))
 	if [ $FRAME -gt 3 ]; then
-	    FRAME=0;
+	    local FRAME=0;
 	fi
 	if [ $FRAME -eq 0 ]; then
-	    OFFSET=0
+	    local OFFSET=0
 	fi
     done
 }
@@ -662,18 +734,35 @@ function draw_fog() {
     LINE5="@#############@###########@#####"
     
     local OFFSET=0
-    local DISPLAY_LINE=9
+    local DISPLAY_LINE=7
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-	fg_light_gray
-	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+	scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID fg_light_gray bg_default
 	sleep 0.5
-	OFFSET=$((OFFSET+1))
+	local OFFSET=$((OFFSET+1))
 	if [ $OFFSET -gt $LWID ]; then
-	    OFFSET=0
+	    local OFFSET=0
 	fi
     done
+}
+
+function scroll_message() {
+    local OFFSET=$1
+    local DISPLAY_LINE=$2
+    local DISPLAY_COL=$3
+    local LWID=$4
+    local LINE_LEN=${#LINE0}
+
+    local LLINE0_TMP=${MESSAGE:$OFFSET:$LWID}" "${MESSAGE}
+    local LLINE0=${LLINE0_TMP:0:$LWID}
+    
+    acquire_print_lock
+    bg_black
+    fg_white
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+    echo -n "$LLINE0"
+    release_print_lock
 }
 
 function scroll_image() {
@@ -681,6 +770,8 @@ function scroll_image() {
     local DISPLAY_LINE=$2
     local DISPLAY_COL=$3
     local LWID=$4
+    local FG_COLOR_FN=$5
+    local BG_COLOR_FN=$6
     local LINE_LEN=${#LINE0}
 
     local LLINE0=${LINE0:$((LWID-OFFSET)):$LWID}${LINE0:0:$((LWID-OFFSET))}
@@ -691,6 +782,8 @@ function scroll_image() {
     local LLINE5=${LINE5:$((LWID-OFFSET)):$LWID}${LINE5:0:$((LWID-OFFSET))}
     
     acquire_print_lock
+    $FG_COLOR_FN
+    $BG_COLOR_FN
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     echo -n "$LLINE0"
     cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
@@ -711,8 +804,11 @@ function show_frame() {
     local FRAME=$1
     local DISPLAY_LINE=$2
     local DISPLAY_COL=$3
+    local FG_COLOR_FN=$4
 
     acquire_print_lock
+    bg_default
+    $FG_COLOR_FN
     case $FRAME in
 	0)
 	    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
@@ -839,4 +935,5 @@ PL=0
 ################################################################################
 ## Main
 ################################################################################
+cm_hide_cursor
 run_loop

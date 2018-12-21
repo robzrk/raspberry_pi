@@ -1,6 +1,6 @@
 #!/bin/bash
 SCRIPTS_DIR=~/raspberry_pi/scripts
-source $SCRIPTS_DIR/print_lib.sh
+source $SCRIPTS_DIR/cursor_manipulation.sh
 
 function large_zero() {
     local L=$1
@@ -289,7 +289,6 @@ function print_large_number() {
 
     local PLN_DIGIT=0
     local PRINT_DIGIT=`echo ${NUMBER:$DIGIT:$((DIGIT+1))}`
-    acquire_print_lock
     while [ "$PRINT_DIGIT" != "" ]; do
 	print_large_digit $PRINT_DIGIT $PLN_LINE $PLN_COL
 	PLN_DIGIT=$((PLN_DIGIT+1))
@@ -300,5 +299,4 @@ function print_large_number() {
 	fi
 	PRINT_DIGIT=`echo ${NUMBER:$PLN_DIGIT:1}`
     done
-    release_print_lock
 }

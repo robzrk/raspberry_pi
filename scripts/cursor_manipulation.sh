@@ -1,5 +1,17 @@
 #!/bin/bash
 
+function cm_hide_cursor() {
+    local L=$1
+    local C=$2
+    echo -ne "\033[?25l"
+}
+
+function cm_show_cursor() {
+    local L=$1
+    local C=$2
+    echo -ne "\033[?25h"
+}
+
 function cm_move_cursor_to_point() {
     local L=$1
     local C=$2

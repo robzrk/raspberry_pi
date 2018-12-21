@@ -182,12 +182,13 @@ def write_daily_photo(message_payload):
 
 def write_daily_text(message_text, display_name):
     message_text_parsed = re.sub('[ \n]', '', message_text)
+    message_text_nl_out = re.sub('[\n\r]', ' ', message_text)
     if len(message_text_parsed) > 1:
         logging.info(' ** Found message text!')
-        logging.info(message_text)
+        logging.info(message_text_nl_out)
         try:
             fh = open(_text_path, 'wb')
-            fh.write('%s says: %s' % (display_name, message_text))
+            fh.write('%s says: %s' % (display_name, message_text_nl_out))
             fh.close();
         except:
             logging.warning('Failed to write %s', _text_path)
