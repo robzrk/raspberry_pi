@@ -35,7 +35,7 @@ def get_todays_group_emails():
     logging.info('Today is a %s day', todays_group)
     for email_addr in config['allowable_emails']:
         this_group = config['allowable_emails'][email_addr]
-        if this_group == todays_group:
+        if todays_group == 'free_for_all' or this_group == todays_group:
             group_email_addrs.append(email_addr)
 
     logging.info('Search for emails from: %s', group_email_addrs)
@@ -126,6 +126,16 @@ def read_emails():
 
             # Generate daily_message or daily_photo files for this email
             for part in email_message.walk():
+                # If the photo email has text as well, use it, unless the
+                #  text email was more recent
+                if part.get_content_type() == 'text/plain':
+                    message_text = part.get_payload()
+                    message_text_parsed = re.sub('[ \n]', '',
+                                                 message_text)
+                    if len(message_text_parsed) > 1:
+                        if (most_recent_photo_date > most_recent_text_date):
+                            logging.info(' ** Found photo message text!')
+                            open('daily_message', 'wb').write(message_text)
                 if part.get_content_type() == 'image/jpeg' or \
                    part.get_content_type() == 'image/png':
                     logging.info(' ** Found photo!')
