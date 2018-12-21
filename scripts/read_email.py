@@ -115,7 +115,8 @@ def read_emails():
         else: 
             logging.info('Downloading text email...')
             try:
-                extract_text_from_email(client.fetch(target_text_uid, 'RFC822'))
+                extract_content_from_email(
+                    client.fetch(target_text_uid, 'RFC822'), True)
             except:
                 logging.warn('Failed downloading text email!')
                 return
@@ -135,7 +136,7 @@ def read_emails():
         else: 
             logging.info('Downloading photo email...')
             try:
-                extract_photo_from_email(
+                extract_content_from_email(
                     client.fetch(target_photo_uid, 'RFC822'),
                     most_recent_photo_date > most_recent_text_date)
             except:
@@ -151,63 +152,46 @@ def read_emails():
             except:
                 logging.warning('Failed to write %s', _dl_email_info_path)
                 
-def extract_text_from_email(target_emails):
-    # Parse text email - should just have one item in text_email
-    for uid, message_data in target_emails.items():
-        email_message = email.message_from_string(message_data['RFC822'])
-        from_address = re.sub('[<>]', '',
-                              email_message.get('From').split(" ")[-1])
-        logging.info('Parsing email from: %s', from_address)
-        logging.info('Sent: %s', email_message.get('Date'))
-
-        # Generate daily_text file
-        for part in email_message.walk():
-            if part.get_content_type() == 'text/plain':
-                message_text = part.get_payload()
-                message_text_parsed = re.sub('[ \n]', '', message_text)
-                if len(message_text_parsed) > 1:
-                    logging.info(' ** Found message text!')
-                    logging.info(message_text)
-                    try:
-                        fh = open(_text_path, 'wb')
-                        fh.write(message_text)
-                        fh.close();
-                    except:
-                        logging.warning('Failed to write %s', _text_path)
-
-def extract_photo_from_email(target_emails, use_text_if_found):
+def extract_content_from_email(target_emails, use_text_if_found):
     # Parse photo email - should just have one item in photo_email
     for uid, message_data in target_emails.items():
         email_message = email.message_from_string(message_data['RFC822'])
         from_address = re.sub('[<>]', '',
                               email_message.get('From').split(" ")[-1])
+        display_name = config['email_display_names'][from_address]
         logging.info('Parsing email from: %s', from_address)
+        logging.info('Displaying name: %s', display_name)
         logging.info('Sent: %s', email_message.get('Date'))
         
         # Generate daily_text or daily_photo files for this email
         for part in email_message.walk():
             if part.get_content_type() == 'image/jpeg' or \
                part.get_content_type() == 'image/png':
-                logging.info(' ** Found photo!')
-                try:
-                    fh = open(_photo_path, 'wb')
-                    fh.write(part.get_payload(decode=True))
-                    fh.close();
-                except:
-                    logging.warning('Failed to write %s', _photo_path)
+                write_daily_photo(part.get_payload(decode=True))
             if use_text_if_found and part.get_content_type() == 'text/plain':
-                message_text = part.get_payload()
-                message_text_parsed = re.sub('[ \n]', '', message_text)
-                if len(message_text_parsed) > 1:
-                    logging.info(' ** Found photo message text!')
-                    logging.info(message_text)
-                    try:
-                        fh = open(_text_path, 'wb')
-                        fh.write(message_text)
-                        fh.close();
-                    except:
-                        logging.warning('Failed to write %s', _text_path)
+                write_daily_text(part.get_payload(), display_name)
 
+def write_daily_photo(message_payload):
+    logging.info(' ** Found photo!')
+    try:
+        fh = open(_photo_path, 'wb')
+        fh.write(message_payload)
+        fh.close();
+    except:
+        logging.warning('Failed to write %s', _photo_path)
+
+def write_daily_text(message_text, display_name):
+    message_text_parsed = re.sub('[ \n]', '', message_text)
+    if len(message_text_parsed) > 1:
+        logging.info(' ** Found message text!')
+        logging.info(message_text)
+        try:
+            fh = open(_text_path, 'wb')
+            fh.write('%s says: %s' % (display_name, message_text))
+            fh.close();
+        except:
+            logging.warning('Failed to write %s', _text_path)
+            
 # Read in photo height and scale it down, in place, to target height
 def resize_photo():
     logging.info('Resizing photo...')
