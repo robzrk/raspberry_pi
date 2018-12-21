@@ -2,34 +2,40 @@
 import email
 import configparser
 import re
-import datetime
+from datetime import datetime
+from dateutil import parser
 import logging
 import subprocess
+import os
 from imapclient import IMAPClient
-
 # globals
-max_text_size = 32768
-target_photo_height = 450
+_max_text_size = 32768
+_target_photo_height = 450
+_script_dir = os.path.dirname(os.path.realpath(__file__))
+_photo_path = '%s/daily_photo' % _script_dir
+_text_path = '%s/daily_text' % _script_dir
+_log_path = '%s/read_email.log' % _script_dir
+_config_path = '%s/../etc/email_addr_config.ini' % _script_dir
 
 def setup():
     global dayofweek
     global config
 
     # Set up logging
-    logging.basicConfig(filename='read_email.log',level=logging.INFO)
-    logging.info('read_email.py started:')
+    logging.basicConfig(filename=_log_path,level=logging.INFO)
     
     # Get date/time info
-    now = datetime.datetime.now()
-    dayofweek = now.strftime("%a")
-    logging.info(now.strftime("%Y-%m-%d %H:%M"))
+    dayofweek = datetime.now().strftime("%a")
+    logging.info('****************************************')
+    logging.info('read_email.py started at %s',
+                 datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logging.info('****************************************')
 
     # Read in list of approved email addresses:
     config = configparser.ConfigParser()
-    configfile = '../etc/email_addr_config.ini' 
     config.sections()
-    config.read(configfile)
-    logging.info('read in configfile: %s', configfile)
+    config.read(_config_path)
+    logging.info('read in configfile: %s', _config_path)
 
 
 def get_todays_group_emails():
@@ -45,10 +51,7 @@ def get_todays_group_emails():
     return group_email_addrs
     
 def read_emails():
-    have_message = False
-    have_photo = False
-    
-    # Check email, generate daily_message and daily_photo files
+    # Check email, generate daily_text and daily_photo files
     with IMAPClient(host="smtp.gmail.com") as client:
         client.login('sendittopi', 'IwI9YB!S2P&^')
         client.select_folder('INBOX')
@@ -72,25 +75,29 @@ def read_emails():
 
         # Figure out which messages from today's group to download
         target_text_uid = 0
-        most_recent_text_date = 0
+        most_recent_text_date = parser.parse('Mon, 1 Jan 2018 00:00:00 -0600')
         target_photo_uid = 0
-        most_recent_photo_date = 0
+        most_recent_photo_date = parser.parse('Mon, 1 Jan 2018 00:00:00 -0600')
         for uid, message_data in response.items():
             email_msg = email.message_from_string(message_data['BODY[HEADER]'])
-            email_date = email_msg.get('Date')
-            is_photo = (message_data['RFC822.SIZE'] > max_text_size)
+            email_date = parser.parse(email_msg.get('Date'))
+            is_photo = (message_data['RFC822.SIZE'] > _max_text_size)
             if is_photo:
+                logging.info('Photo email (uid %d) sent %s', uid, email_date)
                 if (most_recent_photo_date < email_date):
+                    logging.info('Most recent photo email now uid %d', uid)
                     most_recent_photo_date = email_date
                     target_photo_uid = uid
             else:
+                logging.info('Text email (uid %d) sent %s', uid, email_date)
                 if (most_recent_text_date < email_date):
+                    logging.info('Most recent text email now uid %d', uid)
                     most_recent_text_date = email_date
                     target_text_uid = uid
 
-        logging.info('Found text email (uid %d) from %s',
+        logging.info('Selected text email (uid %d) sent %s',
                      target_text_uid, most_recent_text_date)
-        logging.info('Found photo email (uid %d) from %s',
+        logging.info('Selected photo email (uid %d) sent %s',
                      target_photo_uid, most_recent_photo_date)
 
         # Download target messages in full
@@ -99,7 +106,10 @@ def read_emails():
             text_email = client.fetch(target_text_uid, 'RFC822')
         if (target_photo_uid):
             logging.info('Downloading photo email...')
-            photo_email = client.fetch(target_photo_uid, 'RFC822')
+            try:
+                photo_email = client.fetch(target_photo_uid, 'RFC822')
+            except:
+                logging.warn('Failed downloading photo email!')
 
         # Parse text email - should just have one item in text_email
         for uid, message_data in text_email.items():
@@ -109,7 +119,7 @@ def read_emails():
             logging.info('Parsing email from: %s', from_address)
             logging.info('Sent: %s', email_message.get('Date'))
 
-            # Generate daily_message or daily_photo files for this email
+            # Generate daily_text or daily_photo files for this email
             for part in email_message.walk():
                 if part.get_content_type() == 'text/plain':
                     message_text = part.get_payload()
@@ -117,7 +127,7 @@ def read_emails():
                                                  message_text)
                     if len(message_text_parsed) > 1:
                         logging.info(' ** Found message text!')
-                        open('daily_message', 'wb').write(message_text)
+                        open(_text_path, 'wb').write(message_text)
 
         # Parse photo email - should just have one item in photo_email
         for uid, message_data in photo_email.items():
@@ -127,7 +137,7 @@ def read_emails():
             logging.info('Parsing email from: %s', from_address)
             logging.info('Sent: %s', email_message.get('Date'))
 
-            # Generate daily_message or daily_photo files for this email
+            # Generate daily_text or daily_photo files for this email
             for part in email_message.walk():
                 # If the photo email has text as well, use it, unless the
                 #  text email was more recent
@@ -138,30 +148,33 @@ def read_emails():
                     if len(message_text_parsed) > 1:
                         if (most_recent_photo_date > most_recent_text_date):
                             logging.info(' ** Found photo message text!')
-                            open('daily_message', 'wb').write(message_text)
+                            open(_text_path, 'wb').write(message_text)
                 if part.get_content_type() == 'image/jpeg' or \
                    part.get_content_type() == 'image/png':
                     logging.info(' ** Found photo!')
-                    open('daily_photo', 'wb').write(
+                    open(_photo_path, 'wb').write(
                         part.get_payload(decode=True))
 
 # Read in photo height and scale it down, in place, to target height
 def resize_photo():
-    photo_height = int(subprocess.check_output(['convert', 'daily_photo',
+    logging.info('Resizing photo...')
+    photo_height = int(subprocess.check_output(['convert', _photo_path,
                                             '-print', '%h', '/dev/null']))
     logging.info('Original photo height: %d', photo_height)
-    scale_percentage = '%d%%' % (target_photo_height * 100 / photo_height)
+    scale_percentage = '%d%%' % (_target_photo_height * 100 / photo_height)
     if (scale_percentage != "100%"):
         logging.info('Scaling photo to %s of its original size',
                      scale_percentage)
         photo_size = subprocess.check_output(['mogrify', '-resize',
-                                              scale_percentage, 'daily_photo'])
+                                              scale_percentage, _photo_path])
     else:
         logging.info('Photo does not need scaling')
 
 def teardown():
-    logging.info('Exiting at time: %s',
-                 datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logging.info('****************************************')
+    logging.info('read_email.py exited at %s',
+                 datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logging.info('****************************************')
 
 # main
 setup()
