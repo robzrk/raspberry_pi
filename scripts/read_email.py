@@ -4,9 +4,12 @@ import configparser
 import re
 import datetime
 import logging
+import subprocess
 from imapclient import IMAPClient
 
+# globals
 max_text_size = 32768
+target_photo_height = 450
 
 def setup():
     global dayofweek
@@ -141,7 +144,20 @@ def read_emails():
                     logging.info(' ** Found photo!')
                     open('daily_photo', 'wb').write(
                         part.get_payload(decode=True))
-                    
+
+# Read in photo height and scale it down, in place, to target height
+def resize_photo():
+    photo_height = int(subprocess.check_output(['convert', 'daily_photo',
+                                            '-print', '%h', '/dev/null']))
+    logging.info('Original photo height: %d', photo_height)
+    scale_percentage = '%d%%' % (target_photo_height * 100 / photo_height)
+    if (scale_percentage != "100%"):
+        logging.info('Scaling photo to %s of its original size',
+                     scale_percentage)
+        photo_size = subprocess.check_output(['mogrify', '-resize',
+                                              scale_percentage, 'daily_photo'])
+    else:
+        logging.info('Photo does not need scaling')
 
 def teardown():
     logging.info('Exiting at time: %s',
@@ -149,5 +165,6 @@ def teardown():
 
 # main
 setup()
-read_emails()
-teardown()                        
+#read_emails()
+resize_photo()
+teardown()
