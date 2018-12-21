@@ -37,7 +37,7 @@ def setup():
     config.sections()
     config.read(_config_path)
     logging.info('read in configfile: %s', _config_path)
-    
+
 def get_todays_group_emails():
     todays_group = config['day_assignments'][dayofweek]
     group_email_addrs = []
@@ -104,11 +104,13 @@ def read_emails():
         dl_email_info.sections()
         dl_email_info.read(_dl_email_info_path)
         logging.info('read in dl_email_info: %s', _dl_email_info_path)
-        current_text_email = int(dl_email_info['email_uids']['text_email'])
-        current_photo_email = int(dl_email_info['email_uids']['photo_email'])
+        current_text_uid = int(dl_email_info['email_uids']['text_email'])
+        current_photo_uid = int(dl_email_info['email_uids']['photo_email'])
+        logging.info('ct: %d ini_t: %d cp: %d ini_p: %d', current_text_uid,
+                     target_text_uid, current_photo_uid, target_photo_uid)
 
         # Download and parse text messages in full
-        if (current_text_email == target_text_uid):
+        if (current_text_uid == target_text_uid):
             logging.info('Already have current text email...')
         else: 
             logging.info('Downloading text email...')
@@ -120,11 +122,15 @@ def read_emails():
             # Update config with new uid
             dl_email_info.set('email_uids', 'text_email',
                               '%d' % target_text_uid)
-            with open(_dl_email_info_path, "w+") as dl_email_configfile:
-                dl_email_info.write(dl_email_configfile)
+            try:
+                fh = open(_dl_email_info_path, "w+")
+                dl_email_info.write(fh)
+                fh.close()
+            except:
+                logging.warning('Failed to write %s', _dl_email_info_path)
                 
         # Download and parse text messages in full
-        if (current_photo_email == target_photo_uid):
+        if (current_photo_uid == target_photo_uid):
             logging.info('Already have current photo email...')
         else: 
             logging.info('Downloading photo email...')
@@ -138,9 +144,12 @@ def read_emails():
             # Update config with new uid
             dl_email_info.set('email_uids', 'photo_email',
                               '%d' % target_photo_uid)
-            with open(_dl_email_info_path, "w+") as dl_email_configfile:
-                dl_email_info.write(dl_email_configfile)
-
+            try:
+                fh = open(_dl_email_info_path, "w+")
+                dl_email_info.write(fh)
+                fh.close()
+            except:
+                logging.warning('Failed to write %s', _dl_email_info_path)
                 
 def extract_text_from_email(target_emails):
     # Parse text email - should just have one item in text_email
@@ -155,11 +164,16 @@ def extract_text_from_email(target_emails):
         for part in email_message.walk():
             if part.get_content_type() == 'text/plain':
                 message_text = part.get_payload()
-                message_text_parsed = re.sub('[ \n]', '',
-                                             message_text)
+                message_text_parsed = re.sub('[ \n]', '', message_text)
                 if len(message_text_parsed) > 1:
                     logging.info(' ** Found message text!')
-                    open(_text_path, 'wb').write(message_text)
+                    logging.info(message_text)
+                    try:
+                        fh = open(_text_path, 'wb')
+                        fh.write(message_text)
+                        fh.close();
+                    except:
+                        logging.warning('Failed to write %s', _text_path)
 
 def extract_photo_from_email(target_emails, use_text_if_found):
     # Parse photo email - should just have one item in photo_email
@@ -175,14 +189,24 @@ def extract_photo_from_email(target_emails, use_text_if_found):
             if part.get_content_type() == 'image/jpeg' or \
                part.get_content_type() == 'image/png':
                 logging.info(' ** Found photo!')
-                open(_photo_path, 'wb').write(part.get_payload(decode=True))
+                try:
+                    fh = open(_photo_path, 'wb')
+                    fh.write(part.get_payload(decode=True))
+                    fh.close();
+                except:
+                    logging.warning('Failed to write %s', _photo_path)
             if use_text_if_found and part.get_content_type() == 'text/plain':
                 message_text = part.get_payload()
-                message_text_parsed = re.sub('[ \n]', '',
-                                             message_text)
+                message_text_parsed = re.sub('[ \n]', '', message_text)
                 if len(message_text_parsed) > 1:
-                    logging.info(' ** Found message text!')
-                    open(_text_path, 'wb').write(message_text)
+                    logging.info(' ** Found photo message text!')
+                    logging.info(message_text)
+                    try:
+                        fh = open(_text_path, 'wb')
+                        fh.write(message_text)
+                        fh.close();
+                    except:
+                        logging.warning('Failed to write %s', _text_path)
 
 # Read in photo height and scale it down, in place, to target height
 def resize_photo():
