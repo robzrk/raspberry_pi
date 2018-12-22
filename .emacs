@@ -9,15 +9,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RJZ CHANGES HERE
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Alt key to meta
+(setq x-alt-keysym 'meta)
+
 (set-frame-position (selected-frame) 0 0)
-(set-face-foreground 'default "tan")
+(set-face-foreground 'default "white")
 (set-face-background 'default "black")
-;; (set-face-foreground 'font-lock-comment-face "dark cyan")
+(set-face-foreground 'font-lock-comment-face "red")
+(set-face-foreground 'font-lock-constant-face "cyan")
+(set-face-foreground 'font-lock-string-face "yellow")
+(set-face-foreground 'font-lock-type-face "green")
+(set-face-foreground 'font-lock-function-name-face "magenta")
+(set-face-foreground 'font-lock-variable-name-face "yellow")
+
 ;; (set-face-foreground 'default "dark blue")
 ;; (set-face-background 'default "white")
 
 ;; add the dir to load path
-(add-to-list 'load-path "~/.emacs.d/")
+(add-to-list 'load-path "~/.emacs.d/load")
 
 ;; autoload powershell interactive shell
 (autoload 'powershell "powershell" "Start a interactive shell of PowerShell." t)
@@ -39,73 +48,87 @@
 (add-to-list 'auto-mode-alist '("\\.[ds]?v\\'" . verilog-mode))
 ;; Any files in verilog mode should have their keywords colorized
 (add-hook 'verilog-mode-hook '(lambda () (font-lock-mode 1)))
-	  
-;;;RJZ Changes below
+
+;; RJZ Changes below
+(require 'grep)
+
 (defun rjz_load_dual ()
   (interactive)
-;;  (set-face-font 'default "-adobe-courier-medium-r-normal--12-120-75-75-m-70-iso10646-1")
+  (set-face-font 'default "-DAMA-Ubuntu Mono-normal-normal-normal-*-13-*-*-*-m-0-iso10646-1")
 
-;; RJZ dual monitors
-  (set-frame-size (selected-frame) 164 50)
+  ;; RJZ dual monitors
+  (set-frame-size (selected-frame) 252 70)
   (split-window-horizontally)
-  ;; (shrink-window-horizontally -43)
-  ;; (split-window-horizontally)
+  (shrink-window-horizontally -43)
+  (split-window-horizontally)
 
   )
 
 (defun rjz_load_laptop ()
   (interactive)
-;;  (set-face-font 'default "-adobe-courier-medium-r-normal--12-120-75-75-m-70-iso10646-1")
+  (set-face-font 'default "-DAMA-Ubuntu Mono-normal-normal-normal-*-18-*-*-*-m-0-iso10646-1")
 
-  ;; RJZ no external monitor
-  (set-frame-size (selected-frame) 164 60)
+  ;; RJZ dual monitors
+  (set-frame-size (selected-frame) 164 65)
   (split-window-horizontally)
-
   )
-
 (defun rjz_load_med ()
   (interactive)
-;;  (set-face-font 'default "-adobe-courier-medium-r-normal--20-140-100-100-m-110-iso10646-1")
+  ;; (set-face-font 'default "-sony-fixed-medium-r-normal--24-*-100-100-c-120-fontset-auto2")
 
-;; RJZ dual monitors
+  ;; RJZ dual monitors
   (set-frame-size (selected-frame) 164 66)
   (split-window-horizontally)
 
-;; RJZ no external monitor
-;;   (set-frame-size (selected-frame) 80 58)
+  ;; RJZ no external monitor
+  ;;   (set-frame-size (selected-frame) 80 58)
 
   )
 
 (defun rjz_load_large ()
   (interactive)
-;;  (set-face-font 'default "-adobe-courier-medium-r-normal--34-240-100-100-m-200-iso10646-1")
+  (set-face-font 'default "-DAMA-Ubuntu Mono-normal-normal-normal-*-24-*-*-*-m-0-iso10646-1")
 
-;; RJZ dual monitors
+  ;; RJZ dual monitors
   (set-frame-size (selected-frame) 80 40)
-  
-  
-;; RJZ no external monitor
-;;   (set-frame-size (selected-frame) 80 40)
+
+
+  ;; RJZ no external monitor
+  ;;   (set-frame-size (selected-frame) 80 40)
   )
 
-(eval-after-load "grep"
-  '(grep-compute-defaults))
+
+(defun rjz_load_yuuuge ()
+  (interactive)
+  (set-face-font 'default "-DAMA-Ubuntu Mono-normal-normal-normal-*-30-*-*-*-m-0-iso10646-1")
+
+  ;; RJZ dual monitors
+  (set-frame-size (selected-frame) 80 40)
+
+
+  ;; RJZ no external monitor
+  ;;   (set-frame-size (selected-frame) 80 40)
+  )
+
+
+;; (eval-after-load "grep"
+;;   '(grep-compute-defaults))
 
 (menu-bar-mode -1)
 ;; (tool-bar-mode -1)
 
-;  (set-face-background 'font-lock-comment-face "black")
-;  (set-face-foreground 'font-lock-comment-face "hotpink")
-;  (set-face-foreground 'font-lock-comment-delimiter-face "yellow")
-;  (set-face-foreground 'default "purple")
-;  (set-face-background 'default "black")
-;  (set-face-foreground 'font-lock-warning-face "red")
-;  (set-face-background 'font-lock-warning-face "black")
-;  (set-face-background 'font-lock-comment-face "black")
-;  (set-face-foreground 'font-lock-comment-face "chocolate1")
+					;  (set-face-background 'font-lock-comment-face "black")
+					;  (set-face-foreground 'font-lock-comment-face "hotpink")
+					;  (set-face-foreground 'font-lock-comment-delimiter-face "yellow")
+					;  (set-face-foreground 'default "purple")
+					;  (set-face-background 'default "black")
+					;  (set-face-foreground 'font-lock-warning-face "red")
+					;  (set-face-background 'font-lock-warning-face "black")
+					;  (set-face-background 'font-lock-comment-face "black")
+					;  (set-face-foreground 'font-lock-comment-face "chocolate1")
 					;  (set-face-foreground 'font-lock-comment-delimiter-face "Firebrick")
-;  (set-face-foreground 'font-lock-warning-face "green")
-;  (set-face-background 'font-lock-warning-face "black")
+					;  (set-face-foreground 'font-lock-warning-face "green")
+					;  (set-face-background 'font-lock-warning-face "black")
 
 ;; (custom-set-variables
 ;;  '(grep-find-command "find . -type f -not -name \".*\" -and -not -name \"master\" -and -not -name \"HEAD\" -and -not -name \"*.tmp\" -and -not -name \"TAGS\" -and -not -name \"entries\" -and -not -name \"all-wcprops\" -and -not -name \"*~\" -and -not -name \"*.svn-base\" -and -not -name \"svn-*\" -and -not -name \"*.html\" -print0 | xargs -0 -e grep -n -s -F -I "
@@ -115,7 +138,8 @@
   "setting up grep-command using current word under cursor as a search string"
   (interactive)
   (let* ((cur-word (thing-at-point 'symbol))
-         (cmd (concat "find . -type f -not -name \".*\" -and -not -name \"master\" -and -not -name \"HEAD\" -and -not -name \"*.tmp\" -and -not -name \"TAGS\" -and -not -name \"entries\" -and -not -name \"all-wcprops\" -and -not -name \"*~\" -and -not -name \"*.svn-base\" -and -not -name \"svn-*\" -and -not -name \"*.html\" -print0 | xargs -0 -e grep -n -s -F -I " cur-word )))
+	 (cmd (concat "find . -type f -not -name \".*\" -and -not -name \"master\" -and -not -name \"HEAD\" -and -not -name \"*.tmp\" -and -not -name \"TAGS\" -and -not -name \"entries\" -and -not -name \"all-wcprops\" -and -not -name \"*~\" -and -not -name \"*.svn-base\" -and -not -name \"svn-*\" -and -not -name \"*.html\" -print0 | xargs -0 -e grep -n -s -F -I " cur-word )))
+    ;; (setq grep-find-template 'grep-command cmd)
     (grep-apply-setting 'grep-command cmd)
     (grep cmd)))
 
@@ -132,14 +156,15 @@
 
 ;; key bindings
 (global-set-key (kbd "<f2>") 'rjz_load_dual)
-(global-set-key (kbd "M-<f2>") 'rjz_load_laptop)
-;; (global-set-key (kbd "M-<f2>") 'rjz_load_large)
-(global-set-key (kbd "C-<f2>") 'rjz_load_med)
+(global-set-key (kbd "C-<f2>") 'rjz_load_laptop)
+(global-set-key (kbd "C-x C-<f2>") 'rjz_load_large)
+(global-set-key (kbd "C-x C-<f3>") 'rjz_load_yuuuge)
+;; (global-set-key (kbd "C-<f2>") 'rjz_load_med)
 (global-set-key (kbd "<f3>") 'ansi-term)
 (global-set-key (kbd "C-<f3>") 'vc-annotate)
-;;(global-set-key (kbd "<f4>") 'grep-find)
-(global-set-key (kbd "<f4>") 'current_word_grep)
-(global-set-key (kbd "C-<f4>") 'current_word_edit_grep)
+(global-set-key (kbd "<f4>") 'grep-find)
+(global-set-key (kbd "<f4>") 'current_word_edit_grep)
+(global-set-key (kbd "C-<f4>") 'current_word_grep)
 (global-set-key (kbd "<f5>") 'compile)
 (global-set-key (kbd "C-<f5>") 'refresh-file)
 (global-set-key (kbd "<f6>") (kbd "C-x 0"))
@@ -175,12 +200,21 @@
 ;; (iswitchb-default-keybindings)
 (setq iswitchb-default-method 'samewindow)
 
-(setq default-tab-width 8)
+(setq default-tab-width 4)
 
-;;(shell-command "find /home/rzirkel/xc/hss-nightly -name \"*.[chCH]\" -print | etags -o ~/xc/tags/TAGS_AUTO -")
+(when (display-graphic-p)
+  (shell-command "find /home/rzirkel/xc/hss-nightly -name \"*.[chCH]\" -print | etags -o ~/xc/tags/TAGS_AUTO -")
+  (shell-command "find /home/rzirkel/shasta/hms-controllers -name \"*.[chCH]\" -print | etags -o ~/shasta/tags/TAGS_HMS_CONTROLLERS -")
+  (shell-command "find /home/rzirkel/shasta/hms-cray-jtag-interface -name \"*.[chCH]\" -print | etags -o ~/shasta/tags/TAGS_HMS_CJI -")
+  (shell-command "find /home/rzirkel/xc/scout_firmware -name \"*.[chCH]\" -print | etags -o ~/xc/tags/TAGS_SCOUT -")
+  (shell-command "find /home/rzirkel/shasta/rosetta_drivers -name \"*.[chCH]\" -print | etags -o ~/shasta/tags/TAGS_ROSETTA_DRIVERS -")
 
-;;(visit-tags-table "~/xc/tags/TAGS_AUTO")
-
+  (visit-tags-table "~/xc/tags/TAGS_AUTO")
+  (visit-tags-table "~/shasta/tags/TAGS_HMS_CONTROLLERS")
+  (visit-tags-table "~/shasta/tags/TAGS_HMS_CJI")
+  (visit-tags-table "~/xc/tags/TAGS_SCOUT")
+  (visit-tags-table "~/shasta/tags/TAGS_ROSETTA_DRIVERS")
+  )
 
 (defun refresh-file ()
   (interactive)
@@ -188,20 +222,21 @@
   )
 
 (defun iswitchb-local-keys ()
-  (mapc (lambda (K) 
-          (let* ((key (car K)) (fun (cdr K)))
-            (define-key iswitchb-mode-map (edmacro-parse-keys key) fun)))
-        '(("<right>" . iswitchb-next-match)
-          ("<left>"  . iswitchb-prev-match)
-          ("<up>"    . ignore             )
-          ("<down>"  . ignore             ))))    (add-hook 'iswitchb-define-mode-map-hook 'iswitchb-local-keys)
-
+  (mapc (lambda (K)
+	  (let* ((key (car K)) (fun (cdr K)))
+	    (define-key iswitchb-mode-map (edmacro-parse-keys key) fun)))
+	'(("<right>" . iswitchb-next-match)
+	  ("<left>"  . iswitchb-prev-match)
+	  ("<up>"    . ignore             )
+	  ("<down>"  . ignore             ))))    (add-hook 'iswitchb-define-mode-map-hook 'iswitchb-local-keys)
 
 ;; fonts
-;; (set-face-font 'default "-ETL-ETL Fixed-normal-normal-normal-*-14-*-*-*-c-70-iso10646-1")
+(set-face-font 'default "-DAMA-Ubuntu Mono-normal-normal-normal-*-13-*-*-*-m-0-iso10646-1")
 
-; frame width and height and position
-(rjz_load_dual)
+					; frame width and height and position
+(when (display-graphic-p)   ;; Return non-nil if emacs is running in a graphic display.
+  (rjz_load_dual)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; END RJZ CHANGES
@@ -216,22 +251,22 @@
 ;; Swap Backspace and Delete keys, except for v19 running under X.  This works
 ;; on both HPs and Suns.
 (or (and (eq window-system 'x)
-         (string-match "\\`19\\." emacs-version))
+	 (string-match "\\`19\\." emacs-version))
     (load "term/bobcat"))
 
 ;; Cause the region to be highlighted and prevent region-based commands
 ;; from running when the mark isn't active.
- 
+
 (pending-delete-mode t)
- (setq transient-mark-mode t)
+(setq transient-mark-mode t)
 
 (setq kill-emacs-query-functions
-  (list (function (lambda ()
-                    (ding)
-                    (y-or-n-p "Really quit? ")))))
+      (list (function (lambda ()
+			(ding)
+			(y-or-n-p "Really quit? ")))))
 
 ;; Fonts are automatically highlighted.  For more information
-;; type M-x describe-mode font-lock-mode 
+;; type M-x describe-mode font-lock-mode
 
 (global-font-lock-mode t)
 
@@ -249,11 +284,11 @@
 ;;                             but not both.)
 ;;(let ((my-vm-pkg
 ;;       (if (not window-system)
-;;	   "vm"
-;;	 (define-key menu-bar-file-menu [rmail] '("Read Mail" . vm))
-;;	 (define-key-after menu-bar-file-menu [smail]
-;;	   '("Send Mail" . vm-mail) 'rmail)
-;;	 "win-vm")))
+;;   "vm"
+;; (define-key menu-bar-file-menu [rmail] '("Read Mail" . vm))
+;; (define-key-after menu-bar-file-menu [smail]
+;;   '("Send Mail" . vm-mail) 'rmail)
+;; "win-vm")))
 ;;  (autoload 'vm my-vm-pkg "Read and send mail with View Mail." t)
 ;;  (autoload 'vm-mode my-vm-pkg "Read and send mail with View Mail." t)
 ;;  (autoload 'vm-mail my-vm-pkg "Send mail with View Mail." t)
@@ -265,10 +300,10 @@
 ;;              hilit-background-mode   'light
 ;;              hilit-inhibit-hooks     nil
 ;;              hilit-inhibit-rebinding nil)
-;; 
+;;
 ;;        (require 'hilit19)
 ;;        ))
-;; 
+;;
 ;; Example of how to set the highlighting of color defaults.
 ;; (if (fboundp 'set-face-background)
 ;;     (progn
@@ -301,18 +336,26 @@
 ;; (setq auto-mode-alist
 ;;       (append '(("\\.C\\'" . c++-mode)
 ;;                 ("\\.cc\\'" . c++-mode)
-;; 		("\\.c\\'" . c-mode)
+;; ("\\.c\\'" . c-mode)
 ;;                 ("\\.h\\'"  . c++-mode))
-;; 	      auto-mode-alist))
+;;       auto-mode-alist))
 (setq auto-mode-alist
       (append '(("\\.C\\'" . cc-mode)
-                ("\\.cc\\'" . cc-mode)
+		("\\.cc\\'" . cc-mode)
 		("\\.c\\'" . cc-mode)
-                ("\\.h\\'"  . cc-mode))
+		("\\.h\\'"  . cc-mode))
 	      auto-mode-alist))
 
+;;;; This snippet enables lua-mode
+;; This line is not necessary, if lua-mode.el is already on your load-path
+(add-to-list 'load-path "~/.emacs.d/lua")
+
+(autoload 'lua-mode "lua-mode" "Lua editing mode." t)
+(add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
+(add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
+
 ;; set tab distance to something, so it doesn't change randomly and confuse people
-(setq c-basic-offset 8)
+(setq c-basic-offset 4)
 
 ;; This function is used in various programming language mode hooks below.  It
 ;; does indentation after every newline when writing a program.
@@ -360,17 +403,16 @@
 
 (require 'compile)
 
-
 ;; This gives the form of the default compilation command for C++, C, and
 ;; Fortran programs.  Specifying the "-lm" option for C and C++  eliminates a
 ;; lot of potential confusion.
 
 (defvar compile-guess-command-table
   '((c-mode       . "gcc -Wall -g %s -o %s -lm"); Doesn't work for ".h" files.
-    (c++-mode     . "g++ -g %s -o %s -lm")	; Doesn't work for ".h" files.
+    (c++-mode     . "g++ -g %s -o %s -lm"); Doesn't work for ".h" files.
     (fortran-mode . "f77 -C %s -o %s")
     )
-  "*Association list of major modes to compilation command descriptions, used
+    "*Association list of major modes to compilation command descriptions, used
 by the function `compile-guess-command'.  For each major mode, the compilation
 command may be described by either:
 
@@ -433,11 +475,11 @@ command may be described by either:
   "The \"Compile\" menu keymap.")
 
 (defvar check-option-modes nil
-  "The list of major modes in which the \"Check\" option in the \"Compile\"
+    "The list of major modes in which the \"Check\" option in the \"Compile\"
 menu should be used.")
 
 (defvar compile-menu-modes nil
-  "The list of major modes in which the \"Compile\" menu has been installed.
+    "The list of major modes in which the \"Compile\" menu has been installed.
 This list used by the function `add-compile-menu-to-mode', which is called by
 various major mode hooks.")
 
@@ -464,7 +506,7 @@ various major mode hooks.")
 
   (define-key compile-menu [make]         '("Make..." . make))
 
-  (define-key compile-menu [check-file]   '("Check This File..." . 
+  (define-key compile-menu [check-file]   '("Check This File..." .
 					    check-file))
 
   (define-key compile-menu [compile]     '("Compile This File..." . compile))
@@ -479,16 +521,16 @@ various major mode hooks.")
 ;;; Here are the new commands that are invoked by the "Compile" menu.
 
 (defun previous-compilation-error ()
-  "Visit previous compilation error message and corresponding source code.
+    "Visit previous compilation error message and corresponding source code.
 See the documentation for the command `next-error' for more information."
-  (interactive)
-  (next-error -1))
+    (interactive)
+    (next-error -1))
 
 (defun first-compilation-error ()
-  "Visit the first compilation error message and corresponding source code.
+    "Visit the first compilation error message and corresponding source code.
 See the documentation for the command `next-error' for more information."
-  (interactive)
-  (next-error '(4)))
+    (interactive)
+    (next-error '(4)))
 
 (defvar check-history nil)
 
@@ -516,13 +558,13 @@ See the documentation for the command `next-error' for more information."
 ;;; Define a function to be called by the compiled language mode hooks.
 
 (defun add-compile-menu-to-mode ()
-  "If the current major mode doesn't already have access to the \"Compile\"
+    "If the current major mode doesn't already have access to the \"Compile\"
 menu, add it to the menu bar."
-  (if (memq major-mode compile-menu-modes)
-      nil
-    (local-set-key [menu-bar compile] (cons "Compile" compile-menu))
-    (setq compile-menu-modes (cons major-mode compile-menu-modes))
-    ))
+    (if (memq major-mode compile-menu-modes)
+	nil
+      (local-set-key [menu-bar compile] (cons "Compile" compile-menu))
+      (setq compile-menu-modes (cons major-mode compile-menu-modes))
+      ))
 
 
 ;; And finally, make sure that the "Compile" menu is available in C, C++, and
@@ -533,7 +575,7 @@ menu, add it to the menu bar."
 (add-hook 'fortran-mode-hook (function add-compile-menu-to-mode))
 
 ;; To make emacs use spaces instead of tabs (Added by Art Lee on 2/19/2008)
-(setq-default indent-tabs-mode t)
+(setq-default indent-tabs-mode nil)
 
 ;; This is how emacs tells the file type by the file suffix.
 (setq auto-mode-alist
@@ -554,31 +596,31 @@ menu, add it to the menu bar."
 ;;
 ;; Finally look for .customs.emacs file and load it if found
 
-(if "~/.customs.emacs" 
+(if "~/.customs.emacs"
     (load "~/.customs.emacs" t t))
 
 ;; Art: added with v. 23.1 to make spacebar complete filenames (8/17/2009)
 ;; (progn
 ;;  (define-key minibuffer-local-completion-map " " 'minibuffer-complete-word)
 ;;  (define-key minibuffer-local-filename-completion-map " " 'minibuffer-complete-word)
-;;  (define-key minibuffer-local-must-match-filename-map " " 'minibuffer-complete-word)) 
+;;  (define-key minibuffer-local-must-match-filename-map " " 'minibuffer-complete-word))
 
 ;; Art: added with v. 23.1
 ;; Set env variable this way?  I used the traditional way instead
-;(info "(emacs) Windows HOME")
+					;(info "(emacs) Windows HOME")
 
 ;; End of file.
 (custom-set-variables
-  ;; custom-set-variables was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  )
 (custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  )
 
 (put 'downcase-region 'disabled nil)
@@ -588,5 +630,16 @@ menu, add it to the menu bar."
 (require 'tramp)
 (setq tramp-default-method "ssh")
 
+(setq ring-bell-function 'ignore)
+
 ;; RJZ Changes here
 ;; Open some buffers
+(when (display-graphic-p)
+  (find-file "/home/rzirkel/xc/hss-nightly/workspace/controllers/bcsysd/bcsysd.c")
+  (find-file "/home/rzirkel/xc/hss-nightly/workspace/commands/xtppr/xtppr.c")
+  (find-file "/home/rzirkel/scripts/hms_go.sh")
+  (windmove-right)
+  )
+;; (find-file "/rjzirkel@sv24.ec.intel.com:/home/rjzirkel/work/svos_svfdo/apps/fabric/wfr/test/rcv/wfr_rcv_egr.cpp")
+;; (find-file "/rjzirkel@sv24.ec.intel.com:/home/rjzirkel/work/slxbuild/pvesv-sim/wfr_prr/simics-workspace/modules/spc_top/test/s-rxe.py")
+(put 'scroll-left 'disabled nil)
