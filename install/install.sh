@@ -14,7 +14,7 @@ mkdir ~/.config/openbox
 cp ~/raspberry_pi/install/lxde-pi-rc.xml ~/.config/openbox/
 cp ~/raspberry_pi/install/lxterminal.conf ~/.config/lxterminal/
 
-sudo cp ~/raspberry_pi/install/rc.local /etc/
+cp ~/raspberry_pi/install/.profile ~/ 
 
 cd
 tar xf ~/raspberry_pi/install/LCD-show-*.tar.gz
