@@ -14,7 +14,7 @@ _target_photo_height = 450
 _script_dir = os.path.dirname(os.path.realpath(__file__))
 _photo_path = '%s/daily_photo' % _script_dir
 _text_path = '%s/daily_text' % _script_dir
-_log_path = '%s/read_email.log' % _script_dir
+_log_path = '/tmp/read_email.log'
 _config_path = '%s/../etc/email_addr_config.ini' % _script_dir
 _dl_email_info_path = '%s/../etc/downloaded_email.ini' % _script_dir
 
