@@ -8,15 +8,25 @@ function large_zero() {
     cm_move_cursor_to_point $L $C
     echo -n "00000000"
     cm_move_cursor_to_point $((L+1)) $C
-    echo -n "0      0"
+    echo -n "0"
+    cm_move_cursor_to_point $((L+1)) $((C+7))
+    echo -n        "0"
     cm_move_cursor_to_point $((L+2)) $C
-    echo -n "0      0"
+    echo -n "0"
+    cm_move_cursor_to_point $((L+2)) $((C+7))
+    echo -n        "0"
     cm_move_cursor_to_point $((L+3)) $C
-    echo -n "0      0"
+    echo -n "0"
+    cm_move_cursor_to_point $((L+3)) $((C+7))
+    echo -n        "0"
     cm_move_cursor_to_point $((L+4)) $C
-    echo -n "0      0"
+    echo -n "0"
+    cm_move_cursor_to_point $((L+4)) $((C+7))
+    echo -n        "0"
     cm_move_cursor_to_point $((L+5)) $C
-    echo -n "0      0"
+    echo -n "0"
+    cm_move_cursor_to_point $((L+5)) $((C+7))
+    echo -n        "0"
     cm_move_cursor_to_point $((L+6)) $C
     echo -n "00000000"
 }
@@ -24,20 +34,20 @@ function large_zero() {
 function large_one() {
     local L=$1
     local C=$2
-    cm_move_cursor_to_point $L $C
-    echo -n "   1111 "
-    cm_move_cursor_to_point $((L+1)) $C
-    echo -n "  1   1 "
-    cm_move_cursor_to_point $((L+2)) $C
-    echo -n " 1    1 "
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n "      1 "
-    cm_move_cursor_to_point $((L+4)) $C
-    echo -n "      1 "
-    cm_move_cursor_to_point $((L+5)) $C
-    echo -n "      1 "
-    cm_move_cursor_to_point $((L+6)) $C
-    echo -n "11111111"
+    cm_move_cursor_to_point $L $((C+3))
+    echo -n    "1111"
+    cm_move_cursor_to_point $((L+1)) $((C+6))
+    echo -n       "1"
+    cm_move_cursor_to_point $((L+2)) $((C+6))
+    echo -n       "1"
+    cm_move_cursor_to_point $((L+3)) $((C+6))
+    echo -n       "1"
+    cm_move_cursor_to_point $((L+4)) $((C+6))
+    echo -n       "1"
+    cm_move_cursor_to_point $((L+5)) $((C+6))
+    echo -n       "1"
+    cm_move_cursor_to_point $((L+6)) $((C+2))
+    echo -n   "111111"
 }
 
 function large_two() {
@@ -45,16 +55,16 @@ function large_two() {
     local C=$2
     cm_move_cursor_to_point $L $C
     echo -n "22222222"
-    cm_move_cursor_to_point $((L+1)) $C
-    echo -n "       2"
-    cm_move_cursor_to_point $((L+2)) $C
-    echo -n "       2"
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n " 222222 "
+    cm_move_cursor_to_point $((L+1)) $((C+7))
+    echo -n        "2"
+    cm_move_cursor_to_point $((L+2)) $((C+7))
+    echo -n        "2"
+    cm_move_cursor_to_point $((L+3)) $((C+1))
+    echo -n  "222222"
     cm_move_cursor_to_point $((L+4)) $C
-    echo -n "2       "
+    echo -n "2"
     cm_move_cursor_to_point $((L+5)) $C
-    echo -n "2       "
+    echo -n "2"
     cm_move_cursor_to_point $((L+6)) $C
     echo -n "22222222"
 }
@@ -64,16 +74,16 @@ function large_three(){
     local C=$2
     cm_move_cursor_to_point $L $C
     echo -n "33333333"
-    cm_move_cursor_to_point $((L+1)) $C
-    echo -n "       3"
-    cm_move_cursor_to_point $((L+2)) $C
-    echo -n "       3"
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n " 333333 "
-    cm_move_cursor_to_point $((L+4)) $C
-    echo -n "       3"
-    cm_move_cursor_to_point $((L+5)) $C
-    echo -n "       3"
+    cm_move_cursor_to_point $((L+1)) $((C+7))
+    echo -n        "3"
+    cm_move_cursor_to_point $((L+2)) $((C+7))
+    echo -n        "3"
+    cm_move_cursor_to_point $((L+3)) $((C+1))
+    echo -n  "333333"
+    cm_move_cursor_to_point $((L+4)) $((C+7))
+    echo -n        "3"
+    cm_move_cursor_to_point $((L+5)) $((C+7))
+    echo -n        "3"
     cm_move_cursor_to_point $((L+6)) $C
     echo -n "33333333"
 }
@@ -81,20 +91,26 @@ function large_three(){
 function large_four(){
     local L=$1
     local C=$2
-    cm_move_cursor_to_point $L $C
-    echo -n "      4 "
-    cm_move_cursor_to_point $((L+1)) $C
-    echo -n "    4 4 "
-    cm_move_cursor_to_point $((L+2)) $C
-    echo -n "  4   4 "
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n "44444444"
-    cm_move_cursor_to_point $((L+4)) $C
-    echo -n "      4 "
-    cm_move_cursor_to_point $((L+5)) $C
-    echo -n "      4 "
-    cm_move_cursor_to_point $((L+6)) $C
-    echo -n "      4 "
+    cm_move_cursor_to_point $L $((C+2))
+    echo -n   "4"
+    cm_move_cursor_to_point $L $((C+6))
+    echo -n       "4"
+    cm_move_cursor_to_point $((L+1)) $((C+2))
+    echo -n   "4"
+    cm_move_cursor_to_point $((L+1)) $((C+6))
+    echo -n       "4"
+    cm_move_cursor_to_point $((L+2)) $((C+2))
+    echo -n   "4"
+    cm_move_cursor_to_point $((L+2)) $((C+6))
+    echo -n       "4"
+    cm_move_cursor_to_point $((L+3)) $((C+2))
+    echo -n   "444444"
+    cm_move_cursor_to_point $((L+4)) $((C+6))
+    echo -n       "4"
+    cm_move_cursor_to_point $((L+5)) $((C+6))
+    echo -n       "4"
+    cm_move_cursor_to_point $((L+6)) $((C+6))
+    echo -n       "4"
 }
 
 function large_five(){
@@ -103,17 +119,17 @@ function large_five(){
     cm_move_cursor_to_point $L $C
     echo -n "55555555"
     cm_move_cursor_to_point $((L+1)) $C
-    echo -n "5       "
+    echo -n "5"
     cm_move_cursor_to_point $((L+2)) $C
-    echo -n "5       "
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n " 555555 "
-    cm_move_cursor_to_point $((L+4)) $C
-    echo -n "       5"
-    cm_move_cursor_to_point $((L+5)) $C
-    echo -n "       5"
+    echo -n "5"
+    cm_move_cursor_to_point $((L+3)) $((C+1))
+    echo -n  "555555"
+    cm_move_cursor_to_point $((L+4)) $((C+7))
+    echo -n        "5"
+    cm_move_cursor_to_point $((L+5)) $((C+7))
+    echo -n        "5"
     cm_move_cursor_to_point $((L+6)) $C
-    echo -n "5555555 "
+    echo -n "5555555"
 }
 
 function large_six(){
@@ -122,15 +138,19 @@ function large_six(){
     cm_move_cursor_to_point $L $C
     echo -n "66666666"
     cm_move_cursor_to_point $((L+1)) $C
-    echo -n "6       "
+    echo -n "6"
     cm_move_cursor_to_point $((L+2)) $C
-    echo -n "6       "
+    echo -n "6"
     cm_move_cursor_to_point $((L+3)) $C
-    echo -n "6666666 "
+    echo -n "6666666"
     cm_move_cursor_to_point $((L+4)) $C
-    echo -n "6      6"
+    echo -n "6"
+    cm_move_cursor_to_point $((L+4)) $((C+7))
+    echo -n        "6"
     cm_move_cursor_to_point $((L+5)) $C
-    echo -n "6      6"
+    echo -n "6"
+    cm_move_cursor_to_point $((L+5)) $((C+7))
+    echo -n        "6"
     cm_move_cursor_to_point $((L+6)) $C
     echo -n "66666666"
 }
@@ -140,18 +160,18 @@ function large_seven(){
     local C=$2
     cm_move_cursor_to_point $L $C
     echo -n "77777777"
-    cm_move_cursor_to_point $((L+1)) $C
-    echo -n "       7"
-    cm_move_cursor_to_point $((L+2)) $C
-    echo -n "      7 "
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n "     7  "
-    cm_move_cursor_to_point $((L+4)) $C
-    echo -n "    7   "
-    cm_move_cursor_to_point $((L+5)) $C
-    echo -n "   7    "
-    cm_move_cursor_to_point $((L+6)) $C
-    echo -n "  7     "
+    cm_move_cursor_to_point $((L+1)) $((C+7))
+    echo -n        "7"
+    cm_move_cursor_to_point $((L+2)) $((C+6))
+    echo -n       "7"
+    cm_move_cursor_to_point $((L+3)) $((C+5))
+    echo -n      "7"
+    cm_move_cursor_to_point $((L+4)) $((C+4))
+    echo -n     "7"
+    cm_move_cursor_to_point $((L+5)) $((C+3))
+    echo -n    "7"
+    cm_move_cursor_to_point $((L+6)) $((C+2))
+    echo -n   "7"
 }
 
 function large_eight(){
@@ -160,15 +180,23 @@ function large_eight(){
     cm_move_cursor_to_point $L $C
     echo -n "88888888"
     cm_move_cursor_to_point $((L+1)) $C
-    echo -n "8      8"
+    echo -n "8"
+    cm_move_cursor_to_point $((L+1)) $((C+7))
+    echo -n        "8"
     cm_move_cursor_to_point $((L+2)) $C
-    echo -n "8      8"
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n " 888888 "
+    echo -n "8"
+    cm_move_cursor_to_point $((L+2)) $((C+7))
+    echo -n        "8"
+    cm_move_cursor_to_point $((L+3)) $((C+1))
+    echo -n  "888888"
     cm_move_cursor_to_point $((L+4)) $C
-    echo -n "8      8"
+    echo -n "8"
+    cm_move_cursor_to_point $((L+4)) $((C+7))
+    echo -n        "8"
     cm_move_cursor_to_point $((L+5)) $C
-    echo -n "8      8"
+    echo -n "8"
+    cm_move_cursor_to_point $((L+5)) $((C+7))
+    echo -n        "8"
     cm_move_cursor_to_point $((L+6)) $C
     echo -n "88888888"
 }
@@ -179,15 +207,23 @@ function large_nine(){
     cm_move_cursor_to_point $L $C
     echo -n "99999999"
     cm_move_cursor_to_point $((L+1)) $C
-    echo -n "9      9"
+    echo -n "9"
+    cm_move_cursor_to_point $((L+1)) $((C+7))
+    echo -n        "9"
     cm_move_cursor_to_point $((L+2)) $C
-    echo -n "9      9"
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n " 9999999"
+    echo -n "9"
+    cm_move_cursor_to_point $((L+2)) $((C+7))
+    echo -n        "9"
+    cm_move_cursor_to_point $((L+3)) $((C+1))
+    echo -n  "9999999"
     cm_move_cursor_to_point $((L+4)) $C
-    echo -n "       9"
+    echo -n "9"
+    cm_move_cursor_to_point $((L+4)) $((C+7))
+    echo -n        "9"
     cm_move_cursor_to_point $((L+5)) $C
-    echo -n "       9"
+    echo -n "9"
+    cm_move_cursor_to_point $((L+5)) $((C+7))
+    echo -n        "9"
     cm_move_cursor_to_point $((L+6)) $C
     echo -n "99999999"
 }
@@ -195,18 +231,6 @@ function large_nine(){
 function large_dot(){
     local L=$1
     local C=$2
-    cm_move_cursor_to_point $L $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+1)) $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+2)) $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+3)) $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+4)) $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+5)) $C
-    echo -n "  "
     cm_move_cursor_to_point $((L+6)) $C
     echo -n "o "
 }
@@ -214,20 +238,8 @@ function large_dot(){
 function large_dash(){
     local L=$1
     local C=$2
-    cm_move_cursor_to_point $L $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+1)) $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+2)) $C
-    echo -n "  "
     cm_move_cursor_to_point $((L+3)) $C
     echo -n "--"
-    cm_move_cursor_to_point $((L+4)) $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+5)) $C
-    echo -n "  "
-    cm_move_cursor_to_point $((L+6)) $C
-    echo -n "  "
 }
 
 function print_large_digit() {

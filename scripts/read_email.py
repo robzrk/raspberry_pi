@@ -14,6 +14,7 @@ _target_photo_height = 450
 _script_dir = os.path.dirname(os.path.realpath(__file__))
 _photo_path = '%s/daily_photo' % _script_dir
 _text_path = '%s/daily_text' % _script_dir
+_sender_path = '%s/daily_text_sender' % _script_dir
 _log_path = '/tmp/read_email.log'
 _config_path = '%s/../etc/email_addr_config.ini' % _script_dir
 _dl_email_info_path = '%s/../etc/downloaded_email.ini' % _script_dir
@@ -187,8 +188,14 @@ def write_daily_text(message_text, display_name):
         logging.info(' ** Found message text!')
         logging.info(message_text_nl_out)
         try:
+            fh = open(_sender_path, 'wb')
+            fh.write('%s' % display_name)
+            fh.close();
+        except:
+            logging.warning('Failed to write %s', _sender_path)
+        try:
             fh = open(_text_path, 'wb')
-            fh.write('%s says: %s' % (display_name, message_text_nl_out))
+            fh.write('%s' % message_text_nl_out)
             fh.close();
         except:
             logging.warning('Failed to write %s', _text_path)

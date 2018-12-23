@@ -21,12 +21,12 @@ trap ctrl_c INT
 function get_height() {
     # tput lines
 #     echo 19
-    echo 30
+    echo 33
 }
 function get_width() {
     # tput cols
 #     echo 58
-    echo 37
+    echo 40
 }
 
 function ctrl_c() {
@@ -126,7 +126,7 @@ function extract_xml_forecast() {
 }
 
 function update_weather() {
-    WEATHER=`curl -s https://w1.weather.gov/xml/current_obs/KMSP.xml`
+    WEATHER=`curl -s https://w1.weather.gov/xml/current_obs/${GROUP_LOCATION}.xml`
     return $?
     # echo $WEATHER > weather.xml
     # WEATHER=`cat weather.xml`
@@ -154,24 +154,18 @@ function dump_basic_weather() {
     local COLOR_TEMP=$WINDCHILL
     fi
 
-    local DISPLAY_LINE=2
+    local DISPLAY_LINE=4
     local DISPLAY_COL=3
     acquire_print_lock
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    bg_default
+    bg_black
     fg_color_from_temp $COLOR_TEMP
-    echo -n "$STRING."
+    echo -n "$STRING.  Wind: $WIND_DIR @ ${WIND_MPH}MPH"
     local DISPLAY_LINE=$((DISPLAY_LINE+2))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    bg_default
-    fg_color_from_temp $COLOR_TEMP
-    echo -n "Wind: $WIND_DIR @ ${WIND_MPH}MPH"
-    local DISPLAY_LINE=$((DISPLAY_LINE+2))
-    clear_specified_line_keep_border $DISPLAY_LINE
-    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    bg_default
+    bg_black
     fg_color_from_temp $COLOR_TEMP
     echo -n "Humidity: ${HUMIDITY}%"
     local DISPLAY_LINE=$((DISPLAY_LINE+12))
@@ -180,7 +174,7 @@ function dump_basic_weather() {
     else
     local DISPLAY_COL=10
     fi
-    bg_default
+    bg_black
     fg_color_from_temp $COLOR_TEMP
     print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
     if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
@@ -189,6 +183,7 @@ function dump_basic_weather() {
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     bg_default
+    bg_black
     fg_color_from_temp $COLOR_TEMP
     echo -n "${WINDCHILL}ºF windchill"
     fi
@@ -248,8 +243,8 @@ function draw_weather_aux() {
     local SUNSET_TIME_FMT=`echo $SUNSET_TIME | sed "s/://g" | head -c 4`
     SUNSET_TIME_FMT=$(( SUNSET_TIME_FMT + 1200 ))
     SUNSET_TIME_FMT=`echo ${SUNSET_TIME_FMT:0:2}:${SUNSET_TIME_FMT:2:4}`
-    local SUNSET_TIME_CMP=`env TZ='America/Chicago' date -d "$SUNSET_TIME_FMT UTC" +"%H%M"`
-    local CURR_TIME=`TZ='America/Chicago' date +"%H%M"`
+    local SUNSET_TIME_CMP=`TZ=${GROUP_TIMEZONE} date -d "$SUNSET_TIME_FMT UTC" +"%H%M"`
+    local CURR_TIME=`TZ=${GROUP_TIMEZONE} date +"%H%M"`
     if [ $CURR_TIME -le $SUNSET_TIME_CMP ]; then
     local IS_DAYTIME=1
     else
@@ -281,8 +276,21 @@ function dump_basic_forecast() {
     local DISPLAY_COL=3
     acquire_print_lock
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+    echo -n "${TEMP}"
     release_print_lock
-    print_lock "-n" "${TEMP}"
+} 
+
+
+function dump_dt_sender() {
+    local DT_SENDER=`cat $SCRIPTS_DIR/daily_text_sender | tr -d '\r' | tr -d '\n'`
+    local DISPLAY_LINE=31
+    local DISPLAY_COL=3
+    acquire_print_lock
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
+    fg_white
+    bg_black
+    echo -n "Message brought to you by ${DT_SENDER}"
+    release_print_lock
 }
 
 function start_daily_text_display() {
@@ -292,29 +300,31 @@ function start_daily_text_display() {
 
 function display_daily_text() {
     local OFFSET=0
-    local DISPLAY_LINE=28
+    local DISPLAY_LINE=29
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     local MESSAGE_IN=`cat $SCRIPTS_DIR/daily_text | tr -d '\r' | tr -d '\n'`
     MESSAGE="${MESSAGE_IN}     "
     local MSG_LEN=${#MESSAGE}
     while [ 1 ]; do
-    scroll_message $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
-    sleep .1
-    local OFFSET=$((OFFSET+1))
-    if [ $OFFSET -gt $MSG_LEN ]; then
-        local OFFSET=0
-    fi
+        scroll_message $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
+        sleep .1
+        local OFFSET=$((OFFSET+1))
+        if [ $OFFSET -gt $MSG_LEN ]; then
+            local OFFSET=0
+        fi
     done
 }
 
 function dump_date() {
-    local DATE=`TZ='America/Chicago' date +"%A %b %d %l:%M:%S"`
+    local DATE=`TZ=${GROUP_TIMEZONE} date +"%A %b %d %l:%M:%S"`
+    local DISPLAY_LINE=2
+    local DISPLAY_COL=3
     acquire_print_lock
-    clear_specified_line_keep_border $((HEIGHT-3))
-    cm_move_cursor_to_point $((HEIGHT-3)) 3
+    clear_specified_line_keep_border $DISPLAY_COL
+    cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     fg_cyan
-    bg_default
+    bg_black
     echo -n "$DATE"
     release_print_lock
 }
@@ -387,6 +397,7 @@ function run_loop() {
 
 function run_pass_blocking() {
     dump_basic_weather
+    dump_dt_sender
     # dump_basic_forecast
     # exit 0
     for i in {1..15}; do
@@ -759,7 +770,7 @@ function scroll_message() {
     local LWID=$4
     local LINE_LEN=${#LINE0}
 
-    local LLINE0_TMP=${MESSAGE:$OFFSET:$LWID}" "${MESSAGE}
+    local LLINE0_TMP=${MESSAGE:$OFFSET:$LWID}" "${MESSAGE}" "${MESSAGE}" "${MESSAGE}
     local LLINE0=${LLINE0_TMP:0:$LWID}
     
     acquire_print_lock
@@ -935,6 +946,8 @@ function show_frame() {
 # Globals
 HEIGHT=`get_height`
 WIDTH=`get_width`
+GROUP_LOCATION=`$SCRIPTS_DIR/get_location.py`
+GROUP_TIMEZONE=`$SCRIPTS_DIR/get_timezone.py`
 PL=0
 
 ################################################################################

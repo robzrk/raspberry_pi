@@ -1,5 +1,14 @@
 #!/bin/bash
 set -x
+
+if [ "$1" == "" ]; then
+    echo "Must specify group name!"
+    cat ~/raspberry_pi/etc/email_addr_config.ini | grep -A 15 "allowable_emails"
+    exit 1
+fi
+MY_GROUP=$1
+echo $MY_GROUP > ~/my_group
+
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 sudo apt-get -y install imagemagick
