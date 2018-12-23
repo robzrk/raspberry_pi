@@ -1,6 +1,14 @@
 #!/bin/bash
 #set -x
 
+function text_bold() {
+    echo -ne "$(tput bold)"
+}
+
+function text_normal() {
+    echo -ne "$(tput sgr0)"
+}
+
 function fg_default() {
     echo -ne "\033[0;39m"
 }

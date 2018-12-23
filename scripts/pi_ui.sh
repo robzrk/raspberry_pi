@@ -32,8 +32,9 @@ function get_width() {
 function ctrl_c() {
     kill -9 $DDT_PID
     print_lock_cleanup
-    fg_default
     bg_default
+    fg_default
+    text_normal
     print_lock_cleanup
     cm_move_cursor_to_point $HEIGHT 0
     print_lock_cleanup
@@ -43,8 +44,9 @@ function ctrl_c() {
 # This function can only be called when lock is already held
 function clear_specified_line_keep_border() {
     local L=$1
-    fg_light_purple
     bg_default
+    fg_light_purple
+    text_bold
     cm_clear_specified_line $L 0
     cm_move_cursor_to_point $L 0
     echo -n "*"
@@ -54,8 +56,9 @@ function clear_specified_line_keep_border() {
 
 function draw_border() {
     acquire_print_lock
-    fg_light_purple
     bg_default
+    fg_light_purple
+    text_bold
     cm_move_cursor_to_point 0 0
     cm_clear_screen
     local LINE=1
@@ -81,6 +84,7 @@ function spin_one_second() {
     local STAGE=$1
     acquire_print_lock
     fg_yellow
+    text_bold
     cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
     case $STAGE in
     0)
@@ -161,30 +165,33 @@ function dump_basic_weather() {
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     bg_black
     fg_color_from_temp $COLOR_TEMP
-    echo -n "$STRING.  Wind: $WIND_DIR @ ${WIND_MPH}MPH"
-    local DISPLAY_LINE=$((DISPLAY_LINE+2))
+    text_bold
+    echo -n "$STRING. Wind $WIND_DIR @ ${WIND_MPH}MPH"
+    local DISPLAY_LINE=$((DISPLAY_LINE+1))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     bg_black
     fg_color_from_temp $COLOR_TEMP
+    text_bold
     echo -n "Humidity: ${HUMIDITY}%"
-    local DISPLAY_LINE=$((DISPLAY_LINE+12))
+    local DISPLAY_LINE=$((DISPLAY_LINE+15))
     if [ $TEMP -ge 100 ]; then
-    local DISPLAY_COL=5
+    local DISPLAY_COL=7
     else
-    local DISPLAY_COL=10
+    local DISPLAY_COL=12
     fi
     bg_black
     fg_color_from_temp $COLOR_TEMP
+    text_bold
     print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
     if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
     local DISPLAY_LINE=$((DISPLAY_LINE+8))
-    local DISPLAY_COL=12
+    local DISPLAY_COL=14
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    bg_default
     bg_black
     fg_color_from_temp $COLOR_TEMP
+    text_bold
     echo -n "${WINDCHILL}ºF windchill"
     fi
     release_print_lock
@@ -194,35 +201,35 @@ function fg_color_from_temp()
 {
     local TEMP=$1
     if [ $TEMP -ge 110 ]; then
-    fg_light_red
+        fg_light_red
     elif [ $TEMP -ge 100 ]; then
-    fg_red
+        fg_red
     elif [ $TEMP -ge 90 ]; then
-    fg_brown
+        fg_brown
     elif [ $TEMP -ge 80 ]; then
-    fg_yellow
+        fg_yellow
     elif [ $TEMP -ge 70 ]; then
-    fg_light_green
+        fg_light_green
     elif [ $TEMP -ge 60 ]; then
-    fg_green
+        fg_green
     elif [ $TEMP -ge 50 ]; then
-    fg_light_cyan
+        fg_light_cyan
     elif [ $TEMP -ge 40 ]; then
-    fg_cyan
+        fg_cyan
     elif [ $TEMP -ge 30 ]; then
-    fg_light_blue
+        fg_light_blue
     elif [ $TEMP -ge 20 ]; then
-    fg_blue
+        fg_blue
     elif [ $TEMP -ge 10 ]; then
-    fg_white
+        fg_white
     elif [ $TEMP -ge 0 ]; then
-    fg_light_purple
+        fg_light_purple
     elif [ $TEMP -ge -10 ]; then
-    fg_purple
+        fg_purple
     elif [ $TEMP -ge -20 ]; then
-    fg_light_gray
+        fg_light_gray
     else
-    fg_dark_gray
+        fg_dark_gray
     fi
 }
 
@@ -246,27 +253,27 @@ function draw_weather_aux() {
     local SUNSET_TIME_CMP=`TZ=${GROUP_TIMEZONE} date -d "$SUNSET_TIME_FMT UTC" +"%H%M"`
     local CURR_TIME=`TZ=${GROUP_TIMEZONE} date +"%H%M"`
     if [ $CURR_TIME -le $SUNSET_TIME_CMP ]; then
-    local IS_DAYTIME=1
+        local IS_DAYTIME=1
     else
-    local IS_DAYTIME=0
+        local IS_DAYTIME=0
     fi
     
     if [[ $WEATHER_STRING == *"Cloud"* ]]; then
-    draw_clouds
+        draw_clouds
     elif [[ $WEATHER_STRING == *"Overcast"* ]]; then
-    draw_overcast
+        draw_overcast
     elif [[ $WEATHER_STRING == *"Snow"* ]]; then
-    draw_snow
+        draw_snow
     elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 0 ]]; then
-    draw_clear
+        draw_clear
     elif [[ $WEATHER_STRING == *"Fair"* && $IS_DAYTIME -eq 1 ]]; then
-    draw_sunny
+        draw_sunny
     elif [[ $WEATHER_STRING == *"Rain"* ]]; then
-    draw_rain
+        draw_rain
     elif [[ $WEATHER_STRING == *"Thunderstorm"* ]]; then
-    draw_thunderstorm
+        draw_thunderstorm
     elif [[ $WEATHER_STRING == *"Fog"* ]]; then
-    draw_fog
+        draw_fog
     fi
 }
 
@@ -283,13 +290,16 @@ function dump_basic_forecast() {
 
 function dump_dt_sender() {
     local DT_SENDER=`cat $SCRIPTS_DIR/daily_text_sender | tr -d '\r' | tr -d '\n'`
+    local ATTRIBUTION="Last message from ${DT_SENDER}"
+    local ATTRIBUTION_LEN=${#ATTRIBUTION}
     local DISPLAY_LINE=31
-    local DISPLAY_COL=3
+    local DISPLAY_COL=$((WIDTH-2-ATTRIBUTION_LEN))
     acquire_print_lock
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    fg_white
     bg_black
-    echo -n "Message brought to you by ${DT_SENDER}"
+    fg_dark_gray
+    text_bold
+    echo -n $ATTRIBUTION
     release_print_lock
 }
 
@@ -300,7 +310,7 @@ function start_daily_text_display() {
 
 function display_daily_text() {
     local OFFSET=0
-    local DISPLAY_LINE=29
+    local DISPLAY_LINE=30
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     local MESSAGE_IN=`cat $SCRIPTS_DIR/daily_text | tr -d '\r' | tr -d '\n'`
@@ -323,8 +333,9 @@ function dump_date() {
     acquire_print_lock
     clear_specified_line_keep_border $DISPLAY_COL
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    fg_cyan
     bg_black
+    fg_white
+    text_bold
     echo -n "$DATE"
     release_print_lock
 }
@@ -437,12 +448,12 @@ function draw_error() {
 }
 
 function draw_clouds() {
-    LINE0="      _____              ______ "
-    LINE1="     (_____) __    ___  (______)"
-    LINE2="            (__)  (___)         "
-    LINE3="                __              "
-    LINE4="   ______      (__)         _   "
-    LINE5="  (______)                 (_)  "
+    LINE0="      _____              ______     "
+    LINE1="     (_____) __    ___  (______)    "
+    LINE2="            (__)  (___)          ___"
+    LINE3=")               __              (___"
+    LINE4="   ______      (__)         _       "
+    LINE5="  (______)                 (_)      "
 
     local OFFSET=0
     local DISPLAY_LINE=7
@@ -459,12 +470,12 @@ function draw_clouds() {
 }
 
 function draw_overcast() {
-    LINE0="  -     _            -    _    -"
-    LINE1="-   -           -           _   "  
-    LINE2="_--__-----_---_____-_---____----"
-    LINE3="                                "
-    LINE4="                                "
-    LINE5="                                "
+    LINE0="  -     _            -    _    -    "
+    LINE1="-   -           -           _      -"  
+    LINE2="_--__-----_---_____-_---____------__"
+    LINE3="                                    "
+    LINE4="                                    "
+    LINE5="                                    "
 
     local OFFSET=0
     local DISPLAY_LINE=7
@@ -481,61 +492,61 @@ function draw_overcast() {
 }
 
 function draw_sunny() {
-    LINE0_0="             _____              "
-    LINE1_0="            /     \             "
-    LINE2_0="           /       \            "
-    LINE3_0="           \       /            "
-    LINE4_0="            \_____/             "
-    LINE5_0="                                "
+    LINE0_0="               _____              "
+    LINE1_0="              /     \             "
+    LINE2_0="             /       \            "
+    LINE3_0="             \       /            "
+    LINE4_0="              \_____/             "
+    LINE5_0="                                  "
 
-    LINE0_1="             __.__              "
-    LINE1_1="           ./     \.            "
-    LINE2_1="          ./       \.           "
-    LINE3_1="          .\       /.           "
-    LINE4_1="           .\__.__/.            "
-    LINE5_1="                                "
+    LINE0_1="               __.__              "
+    LINE1_1="             ./     \.            "
+    LINE2_1="            ./       \.           "
+    LINE3_1="            .\       /.           "
+    LINE4_1="             .\__.__/.            "
+    LINE5_1="                                  "
 
-    LINE0_2="             __|__              "
-    LINE1_2="           \/     \/            "
-    LINE2_2="          _/       \_           "
-    LINE3_2="          _\       /_           "
-    LINE4_2="           /\_____/\            "
-    LINE5_2="               |                "
+    LINE0_2="               __|__              "
+    LINE1_2="             \/     \/            "
+    LINE2_2="            _/       \_           "
+    LINE3_2="            _\       /_           "
+    LINE4_2="             /\_____/\            "
+    LINE5_2="                 |                "
 
-    LINE0_3="          \  __'__  /           "
-    LINE1_3="            /     \             "
-    LINE2_3="         _ /       \ _          "
-    LINE3_3="         _ \       / _          "
-    LINE4_3="            \_____/             "
-    LINE5_3="          /    |    \           "
+    LINE0_3="            \  __'__  /           "
+    LINE1_3="              /     \             "
+    LINE2_3="           _ /       \ _          "
+    LINE3_3="           _ \       / _          "
+    LINE4_3="              \_____/             "
+    LINE5_3="            /    |    \           "
 
-    LINE0_4="          '  _____  '           "
-    LINE1_4="            / .   \             "
-    LINE2_4="       _   /       \   _        "
-    LINE3_4="       _   \       /   _        "
-    LINE4_4="            \_____/             "
-    LINE5_4="         .     .     .          "
+    LINE0_4="            '  _____  '           "
+    LINE1_4="              / .   \             "
+    LINE2_4="         _   /       \   _        "
+    LINE3_4="         _   \       /   _        "
+    LINE4_4="              \_____/             "
+    LINE5_4="           .     .     .          "
 
-    LINE0_5="             _____              "
-    LINE1_5="            / . . \             "
-    LINE2_5="    _      /       \      _     "
-    LINE3_5="    _      \ \     /      _     "
-    LINE4_5="            \_____/             "
-    LINE5_5="                                "
+    LINE0_5="               _____              "
+    LINE1_5="              / . . \             "
+    LINE2_5="      _      /       \      _     "
+    LINE3_5="      _      \ \     /      _     "
+    LINE4_5="              \_____/             "
+    LINE5_5="                                  "
 
-    LINE0_6="             _____              "
-    LINE1_6="            / . . \             "
-    LINE2_6="_          /       \           _"
-    LINE3_6="_          \ \__   /           _"
-    LINE4_6="            \_____/             "
-    LINE5_6="                                "
+    LINE0_6="               _____              "
+    LINE1_6="              / . . \             "
+    LINE2_6="  _          /       \           _"
+    LINE3_6="  _          \ \__   /           _"
+    LINE4_6="              \_____/             "
+    LINE5_6="                                  "
     
-    LINE0_7="             _____              "
-    LINE1_7="            / . . \             "
-    LINE2_7="           /       \            "
-    LINE3_7="           \ \___/ /            "
-    LINE4_7="            \_____/             "
-    LINE5_7="                                "
+    LINE0_7="               _____              "
+    LINE1_7="              / . . \             "
+    LINE2_7="             /       \            "
+    LINE3_7="             \ \___/ /            "
+    LINE4_7="              \_____/             "
+    LINE5_7="                                  "
 
     
     local FRAME=0
@@ -549,40 +560,40 @@ function draw_sunny() {
 }
 
 function draw_rain() {
-    LINE0_0="_--__-----_---_____-_---____---_"
-    LINE1_0="  \   \       \      \    \   \ "
-    LINE2_0="   \    \       \           \  \ "
-    LINE3_0="   \   \     \   \   \ \   \    "
-    LINE4_0="\      \ \      \               "
-    LINE5_0="             \       \    \     "
+    LINE0_0="_--__-----_---_____-_---____---_---_"
+    LINE1_0="  \   \       \      \    \   \    \ "
+    LINE2_0="   \    \       \           \  \    "
+    LINE3_0="   \   \     \   \   \ \   \        "
+    LINE4_0="\      \ \      \                   "
+    LINE5_0="             \       \    \         "
     
-    LINE0_1="_--__-----_---_____-_---____---_"
-    LINE1_1="         \       \    \      \  "
-    LINE2_1="   \   \       \      \    \   \ "
-    LINE3_1="    \    \       \           \  "
-    LINE4_1="    \   \     \   \   \ \   \   "
-    LINE5_1=" \      \ \      \              "
+    LINE0_1="_--__-----_---_____-_---____---_---_"
+    LINE1_1="         \       \    \      \      "
+    LINE2_1="   \   \       \      \    \   \    "
+    LINE3_1="    \    \       \           \  \   "
+    LINE4_1="    \   \     \   \   \ \   \       "
+    LINE5_1=" \      \ \      \                  "
     
-    LINE0_2="_--__-----_---_____-_---____---_"
-    LINE1_2="    \ \      \                \ "
-    LINE2_2="          \       \    \      \ "
-    LINE3_2="\   \   \       \      \    \   "
-    LINE4_2="     \    \       \           \ "
-    LINE5_2="     \   \     \   \   \ \   \  "
+    LINE0_2="_--__-----_---_____-_---____---_---_"
+    LINE1_2="    \ \      \                \   \ "
+    LINE2_2="          \       \    \      \     "
+    LINE3_2="\   \   \       \      \    \   \   "
+    LINE4_2="     \    \       \           \  \  "
+    LINE5_2="     \   \     \   \   \ \   \      "
     
-    LINE0_3="_--__-----_---_____-_---____---_"
-    LINE1_3=" \   \     \   \   \ \   \      "
-    LINE2_3="     \ \      \                \ "
-    LINE3_3="           \       \    \      \ "
-    LINE4_3=" \   \   \       \      \    \  "
-    LINE5_3="      \    \       \           \ "
+    LINE0_3="_--__-----_---_____-_---____---_---_"
+    LINE1_3=" \   \     \   \   \ \   \          "
+    LINE2_3="     \ \      \                \   \ "
+    LINE3_3="           \       \    \      \    "
+    LINE4_3=" \   \   \       \      \    \   \  "
+    LINE5_3="      \    \       \           \  \ "
     
-    LINE0_4="_--__-----_---_____-_---____---_"
-    LINE1_4="  \    \       \           \  \ "
-    LINE2_4="  \   \     \   \   \ \   \     "
-    LINE3_4="      \ \      \                "
-    LINE4_4="            \       \    \      "
-    LINE5_4="  \   \   \       \      \    \ "
+    LINE0_4="_--__-----_---_____-_---____---_---_"
+    LINE1_4="  \    \       \           \  \     "
+    LINE2_4="  \   \     \   \   \ \   \         "
+    LINE3_4="      \ \      \                    "
+    LINE4_4="            \       \    \          "
+    LINE5_4="  \   \   \       \      \    \   \ "
     
     local FRAME=0
     local DISPLAY_LINE=7
@@ -595,47 +606,47 @@ function draw_rain() {
 }
 
 function draw_clear() {
-    LINE0_0="            .        .          "
-    LINE1_0="  .            .      .        ."
-    LINE2_0="                         .      "
-    LINE3_0="          .                     "
-    LINE4_0="    .                           "
-    LINE5_0="                 .     .        "
+    LINE0_0="                .        .          "
+    LINE1_0="      .            .      .        ."
+    LINE2_0="                             .      "
+    LINE3_0=".             .                     "
+    LINE4_0="        .                           "
+    LINE5_0="    .                .     .        "
 
-    LINE0_1="            .             .     "
-    LINE1_1="  .            .      .        ."
-    LINE2_1="      .                  .      "
-    LINE3_1="          .                     "
-    LINE4_1="                             .  "
-    LINE5_1="                 .     .        "
+    LINE0_1="                .             .     "
+    LINE1_1="      .            .      .        ."
+    LINE2_1="          .                  .      "
+    LINE3_1=".             .                     "
+    LINE4_1="                                 .  "
+    LINE5_1="    .                .     .        "
 
-    LINE0_2="            .             .     "
-    LINE1_2="                      .        ."
-    LINE2_2="      .                         "
-    LINE3_2="          .         .           "
-    LINE4_2="    .                        .  "
-    LINE5_2="                       .        "
+    LINE0_2="   .            .             .     "
+    LINE1_2="                          .        ."
+    LINE2_2="          .                         "
+    LINE3_2="              .         .           "
+    LINE4_2="        .                        .  "
+    LINE5_2="                           .        "
 
-    LINE0_3="            .             .     "
-    LINE1_3="  .            .      .         "
-    LINE2_3="      .                  .      "
-    LINE3_3="          .         .           "
-    LINE4_3="    .                        .  "
-    LINE5_3="                 .              "
+    LINE0_3="   .            .             .     "
+    LINE1_3="      .            .      .         "
+    LINE2_3="          .                  .      "
+    LINE3_3="              .         .           "
+    LINE4_3="        .                        .  "
+    LINE5_3="    .                .              "
 
-    LINE0_4="            .        .    .     "
-    LINE1_4="  .            .               ."
-    LINE2_4="                         .      "
-    LINE3_4="          .         .           "
-    LINE4_4="    .                        .  "
-    LINE5_4="                       .        "
+    LINE0_4="   .            .        .    .     "
+    LINE1_4="      .            .               ."
+    LINE2_4="                             .      "
+    LINE3_4=".             .         .           "
+    LINE4_4="        .                        .  "
+    LINE5_4="                           .        "
 
-    LINE0_5="                          .     "
-    LINE1_5="  .            .      .        ."
-    LINE2_5="      .                  .      "
-    LINE3_5="                                "
-    LINE4_5="    .                        .  "
-    LINE5_5="                 .     .        "
+    LINE0_5="                              .     "
+    LINE1_5="      .            .      .        ."
+    LINE2_5="          .                  .      "
+    LINE3_5=".                                   "
+    LINE4_5="        .                        .  "
+    LINE5_5="                     .     .        "
 
     local FRAME=0
     local DISPLAY_LINE=7
@@ -648,40 +659,40 @@ function draw_clear() {
 }
 
 function draw_snow() {
-    LINE0_0="_--__-----_---_____-_---____---_"
-    LINE1_0="  *   *       *      *    *   * "
-    LINE2_0="  *    *       *           *  * "
-    LINE3_0=" *   *     *   *   * *   *      "
-    LINE4_0="    * *      *                * "
-    LINE5_0="         *       *    *      *  "
+    LINE0_0="_--__-----_---_____-_---____---_---_"
+    LINE1_0="      *   *       *      *    *   * "
+    LINE2_0="  *   *    *       *           *  * "
+    LINE3_0="     *   *     *   *   * *   *      "
+    LINE4_0=" *      * *      *                * "
+    LINE5_0="*   *        *       *    *      *  "
     
-    LINE0_1="_--__-----_---_____-_---____---_"
-    LINE1_1="         *       *    *      *  "
-    LINE2_1="  *   *       *      *    *   * "
-    LINE3_1="  *    *       *           *  * "
-    LINE4_1=" *   *     *   *   * *   *      "
-    LINE5_1="    * *      *                * "
+    LINE0_1="_--__-----_---_____-_---____---_---_"
+    LINE1_1="*            *       *    *      *  "
+    LINE2_1="      *   *       *      *    *   * "
+    LINE3_1="  *   *    *       *           *  * "
+    LINE4_1="     *   *     *   *   * *   *      "
+    LINE5_1=" *      * *      *                * "
     
-    LINE0_2="_--__-----_---_____-_---____---_"
-    LINE1_2="    * *      *                * "
-    LINE2_2="         *       *    *      *  "
-    LINE3_2="  *   *       *      *    *   * "
-    LINE4_2="  *    *       *           *  * "
-    LINE5_2=" *   *     *   *   * *   *      "
+    LINE0_2="_--__-----_---_____-_---____---_---_"
+    LINE1_2="        * *      *                * "
+    LINE2_2="*            *       *    *      *  "
+    LINE3_2="      *   *       *      *    *   * "
+    LINE4_2="  *   *    *       *           *  * "
+    LINE5_2="     *   *     *   *   * *   *      "
     
-    LINE0_3="_--__-----_---_____-_---____---_"
-    LINE1_3=" *   *     *   *   * *   *      "
-    LINE2_3="    * *      *                * "
-    LINE3_3="         *       *    *      *  "
-    LINE4_3="  *   *       *      *    *   * "
-    LINE5_3="  *    *       *           *  * "
+    LINE0_3="_--__-----_---_____-_---____---_---_"
+    LINE1_3="     *   *     *   *   * *   *      "
+    LINE2_3="        * *      *                * "
+    LINE3_3="*            *       *    *      *  "
+    LINE4_3="      *   *       *      *    *   * "
+    LINE5_3="  *   *    *       *           *  * "
     
-    LINE0_4="_--__-----_---_____-_---____---_"
-    LINE1_4="  *    *       *           *  * "
-    LINE2_4=" *   *     *   *   * *   *      "
-    LINE3_4="    * *      *                * "
-    LINE4_4="         *       *    *      *  "
-    LINE5_4="  *   *       *      *    *   * "
+    LINE0_4="_--__-----_---_____-_---____---_---_"
+    LINE1_4="      *    *       *           *  * "
+    LINE2_4="     *   *     *   *   * *   *      "
+    LINE3_4="        * *      *                * "
+    LINE4_4="*            *       *    *      *  "
+    LINE5_4="      *   *       *      *    *   * "
     
     local FRAME=0
     local DISPLAY_LINE=7
@@ -694,12 +705,12 @@ function draw_snow() {
 }
 
 function draw_thunderstorm() {
-    LINE0_0="                                "
-    LINE1_0="                                "
-    LINE2_0="                                "
-    LINE3_0="                                "
-    LINE4_0="                                "
-    LINE5_0="                                "
+    LINE0_0="                                    "
+    LINE1_0="                                    "
+    LINE2_0="                                    "
+    LINE3_0="                                    "
+    LINE4_0="                                    "
+    LINE5_0="                                    "
     
     LINE0_1="\\ "
     LINE1_1="\\\\ "
@@ -742,12 +753,12 @@ function draw_thunderstorm() {
 }
 
 function draw_fog() {
-    LINE0="#@#########@#################@##"
-    LINE1="#################@@#######@#####"
-    LINE2="#############@##################"
-    LINE3="#####@##########################"
-    LINE4="########################@#######"
-    LINE5="@#############@###########@#####"
+    LINE0="#@#########@#################@##@##"
+    LINE1="#################@@#######@########"
+    LINE2="#############@#####################"
+    LINE3="#####@############################@"
+    LINE4="########################@##########"
+    LINE5="@#############@###########@########"
     
     local OFFSET=0
     local DISPLAY_LINE=7
@@ -776,6 +787,7 @@ function scroll_message() {
     acquire_print_lock
     bg_black
     fg_white
+    text_bold
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     echo -n "$LLINE0"
     release_print_lock
@@ -798,8 +810,9 @@ function scroll_image() {
     local LLINE5=${LINE5:$((LWID-OFFSET)):$LWID}${LINE5:0:$((LWID-OFFSET))}
     
     acquire_print_lock
-    $FG_COLOR_FN
     $BG_COLOR_FN
+    $FG_COLOR_FN
+    text_bold
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     echo -n "$LLINE0"
     cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
@@ -825,6 +838,7 @@ function show_frame() {
     acquire_print_lock
     bg_default
     $FG_COLOR_FN
+    text_bold
     case $FRAME in
     0)
         cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
