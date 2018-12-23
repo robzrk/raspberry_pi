@@ -16,6 +16,7 @@ cp ~/raspberry_pi/install/lxterminal.conf ~/.config/lxterminal/
 
 cp ~/raspberry_pi/install/.profile ~/ 
 
+sudo cp ~/raspberry_pi/install/lxpolkit.desktop /etc/xdg/autostart/
 cd
 tar xf ~/raspberry_pi/install/LCD-show-*.tar.gz
 cd LCD-show
