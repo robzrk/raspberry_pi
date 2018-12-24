@@ -65,11 +65,13 @@ function draw_border() {
     while [ $LINE -le $HEIGHT ]; do
         if [ $LINE -eq 0 -o $LINE -eq $HEIGHT ]; then
             local COL=1
+            cm_move_cursor_to_point $LINE 0
             while [ $COL -le $WIDTH ]; do
                 echo -n "*"
                 COL=$(( COL + 1 ))
             done
         else
+            cm_move_cursor_to_point $LINE 0
             echo -n "*"
             cm_move_cursor_to_point $LINE $WIDTH
             echo -n "*"
@@ -292,7 +294,7 @@ function dump_dt_sender() {
     local ATTRIBUTION="Last message from ${DT_SENDER}"
     local ATTRIBUTION_LEN=${#ATTRIBUTION}
     local DISPLAY_LINE=$((HEIGHT-1))
-    local DISPLAY_COL=$((WIDTH-2-ATTRIBUTION_LEN))
+    local DISPLAY_COL=$((WIDTH-1-ATTRIBUTION_LEN))
     acquire_print_lock
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     bg_black
@@ -311,7 +313,7 @@ function display_daily_text() {
     local OFFSET=0
     local DISPLAY_LINE=29
     local DISPLAY_COL=3
-    local LWID=$((WIDTH-5))
+    local LWID=$((WIDTH-4))
     local MESSAGE_IN=`cat $SCRIPTS_DIR/daily_text | tr -d '\r' | tr -d '\n'`
     MESSAGE="${MESSAGE_IN}     "
     local MSG_LEN=${#MESSAGE}
