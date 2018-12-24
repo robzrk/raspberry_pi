@@ -1,5 +1,4 @@
 #!/bin/bash
-****************************************
 
 #DEBUG
 #set -x
@@ -22,7 +21,7 @@ trap ctrl_c INT
 function get_height() {
     # tput lines
 #     echo 19
-    echo 33
+    echo 31
 }
 function get_width() {
     # tput cols
@@ -60,23 +59,22 @@ function draw_border() {
     bg_default
     fg_light_purple
     text_bold
-    cm_move_cursor_to_point 0 0
+    cm_move_cursor_to_point 1 0
     cm_clear_screen
-    local LINE=1
-    while [ $LINE -lt $HEIGHT ]; do
-    if [ $LINE -eq 1 -o $LINE -eq $((HEIGHT-1)) ]; then
-        local COL=1
-        while [ $COL -le $WIDTH ]; do
+    local LINE=0
+    while [ $LINE -le $HEIGHT ]; do
+        if [ $LINE -eq 0 -o $LINE -eq $HEIGHT ]; then
+            local COL=1
+            while [ $COL -le $WIDTH ]; do
+                echo -n "*"
+                COL=$(( COL + 1 ))
+            done
+        else
             echo -n "*"
-            COL=$(( COL + 1 ))
-        done
-    else
-        echo -n "*"
-        cm_move_cursor_to_point $LINE $WIDTH
-        echo -n "*"
-    fi
-    echo ""
-    LINE=$(( LINE + 1 ))
+            cm_move_cursor_to_point $LINE $WIDTH
+            echo -n "*"
+        fi
+        LINE=$(( LINE + 1 ))
     done
     release_print_lock
 }
@@ -175,7 +173,7 @@ function dump_basic_weather() {
     fg_color_from_temp $COLOR_TEMP
     text_bold
     echo -n "Wind $WIND_DIR @ ${WIND_MPH}MPH"
-    local DISPLAY_LINE=$((DISPLAY_LINE+15))
+    local DISPLAY_LINE=$((DISPLAY_LINE+14))
     if [ $TEMP -ge 100 ]; then
         local DISPLAY_COL=7
     else
@@ -293,7 +291,7 @@ function dump_dt_sender() {
     local DT_SENDER=`cat $SCRIPTS_DIR/daily_text_sender | tr -d '\r' | tr -d '\n'`
     local ATTRIBUTION="Last message from ${DT_SENDER}"
     local ATTRIBUTION_LEN=${#ATTRIBUTION}
-    local DISPLAY_LINE=31
+    local DISPLAY_LINE=$((HEIGHT-1))
     local DISPLAY_COL=$((WIDTH-2-ATTRIBUTION_LEN))
     acquire_print_lock
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
@@ -311,7 +309,7 @@ function start_daily_text_display() {
 
 function display_daily_text() {
     local OFFSET=0
-    local DISPLAY_LINE=30
+    local DISPLAY_LINE=29
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     local MESSAGE_IN=`cat $SCRIPTS_DIR/daily_text | tr -d '\r' | tr -d '\n'`
@@ -367,13 +365,13 @@ function run_loop() {
     if [ $RUN_CNT -eq 0 ]; then
         clear
         draw_border
-        # $SCRIPTS_DIR/check_email.py
-        # if [ $? -eq 0 ]; then
-        #     $SCRIPTS_DIR/read_email.py
-        #     kill_pid_and_refresh $DDT_PID
-        #     start_daily_text_display
-        #     pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
-        # fi
+        $SCRIPTS_DIR/check_email.py
+        if [ $? -eq 0 ]; then
+            $SCRIPTS_DIR/read_email.py
+            kill_pid_and_refresh $DDT_PID
+            start_daily_text_display
+            pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
+        fi
     fi
 
     # Update the weather, but display a connection error if there is one

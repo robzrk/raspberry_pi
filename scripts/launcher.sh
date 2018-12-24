@@ -7,7 +7,6 @@ if [ -f /tmp/launcher_started ]; then
 else
     touch /tmp/launcher_started
 fi
-#disown -a
 
 echo "running!" >> /tmp/launcher_log
 
@@ -25,4 +24,4 @@ echo "Reading the lastest emails ..."
 $SCRIPTS_DIR/read_email.py
 
 echo "Launching pi_ui ..."
-lxterminal -e $SCRIPTS_DIR/pi_ui.sh
+nohup lxterminal -e $SCRIPTS_DIR/pi_ui.sh
