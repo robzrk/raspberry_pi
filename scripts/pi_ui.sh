@@ -338,17 +338,22 @@ function run_loop() {
         fi
         
         # Update the weather, but display a connection error if there is one
-        if [ $DE_PID -ne 0 ]; then
-            kill_pid_and_refresh $DE_PID
-        fi
         update_weather
         if [ $? -ne 0 ]; then
+            log "update_weather failed. Retrying in 3 seconds..."
+            PREVIOUS_WEATHER_STRING="garbage"
             kill_pid_and_refresh $RPNB_PID
-            draw_error &
-            DE_PID=$!
+            if [ $DE_PID -eq 0 ]; then
+                draw_error &
+                DE_PID=$!
+            fi
             sleep 3
             continue
         else
+            if [ $DE_PID -ne 0 ]; then
+                log "update_weather back up!"
+                kill_pid_and_refresh $DE_PID
+            fi
             DE_PID=0
         fi
         update_sunset
@@ -395,12 +400,14 @@ function draw_error() {
     LINE4="                                "
     LINE5="                                "
 
+    log "in draw_error"
+
     local OFFSET=0
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-        scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID $FG_WHITE $BG_DEFAULT
+        scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID $FG_RED $BG_DEFAULT
         sleep 1
         local OFFSET=$((OFFSET+1))
         if [ $OFFSET -gt $LWID ]; then
@@ -935,7 +942,6 @@ WIDTH=`get_width`
 GROUP_LOCATION=`$SCRIPTS_DIR/get_location.py`
 GROUP_TIMEZONE=`$SCRIPTS_DIR/get_timezone.py`
 PL=0
-
 ################################################################################
 ## Main
 ################################################################################
