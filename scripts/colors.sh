@@ -1,258 +1,97 @@
 #!/bin/bash
 #set -x
 
-function text_bold() {
-    echo -ne "$(tput bold)"
+FG_BLACK=30
+FG_RED=31
+FG_GREEN=32
+FG_YELLOW=33
+FG_BLUE=34
+FG_MAGENTA=35
+FG_CYAN=36
+FG_WHITE=37
+FG_DEFAULT=39
+FG_BRIGHT_BLACK="30;1"
+FG_BRIGHT_RED="31;1"
+FG_BRIGHT_GREEN="32;1"
+FG_BRIGHT_YELLOW="33;1"
+FG_BRIGHT_BLUE="34;1"
+FG_BRIGHT_MAGENTA="35;1"
+FG_BRIGHT_CYAN="36;1"
+FG_BRIGHT_WHITE="37;1"
+BG_BLACK=40
+BG_RED=41
+BG_GREEN=42
+BG_YELLOW=43
+BG_BLUE=44
+BG_MAGENTA=45
+BG_CYAN=46
+BG_WHITE=47
+BG_BRIGHT_BLACK=100
+BG_BRIGHT_RED=101
+BG_BRIGHT_GREEN=102
+BG_BRIGHT_YELLOW=103
+BG_BRIGHT_BLUE=104
+BG_BRIGHT_MAGENTA=105
+BG_BRIGHT_CYAN=106
+BG_BRIGHT_WHITE=107
+BG_DEFAULT=49
+
+function set_color() {
+    local FG=$1
+    local BG=$2
+    echo -ne "\033[${FG};${BG}m"
 }
 
-function text_normal() {
-    echo -ne "$(tput sgr0)"
-}
-
-function fg_default() {
-    echo -ne "\033[0;39m"
-}
-
-function fg_black() {
-    echo -ne "\033[0;30m"
-}
-
-function fg_red() {
-    echo -ne "\033[0;31m"
-}
-
-function fg_green() {
-    echo -ne "\033[0;32m"
-}
-
-function fg_brown() {
-    echo -ne "\033[0;33m"
-}
-
-function fg_blue() {
-    echo -ne "\033[0;34m"
-}
-
-function fg_purple() {
-    echo -ne "\033[0;35m"
-}
-
-function fg_cyan() {
-    echo -ne "\033[0;36m"
-}
-
-function fg_light_gray() {
-    echo -ne "\033[0;37m"
-}
-
-function fg_dark_gray() {
-    echo -ne "\033[1;30m"
-}
-
-function fg_light_red() {
-    echo -ne "\033[1;31m"
-}
-
-function fg_light_green() {
-    echo -ne "\033[1;32m"
-}
-
-function fg_yellow() {
-    echo -ne "\033[1;33m"
-}
-
-function fg_light_blue() {
-    echo -ne "\033[1;34m"
-}
-
-function fg_light_purple() {
-    echo -ne "\033[1;35m"
-}
-
-function fg_light_cyan() {
-    echo -ne "\033[1;36m"
-}
-
-function fg_white() {
-    echo -ne "\033[1;37m"
-}
-
-function fg_random() {
-    local RAND_VAL=$(( RANDOM % 16 ))
-    case $RAND_VAL in
-	0)
-	    fg_green
-	    # fg_black
-	    ;;
-	1)
-	    fg_purple
-	    # fg_blue
-	    ;;
-	2)
-	    fg_green
-	    ;;
-	3)
-	    fg_cyan
-	    ;;
-	4)
-	    fg_red
-	    ;;
-	5)
-	    fg_purple
-	    ;;
-	6)
-	    fg_brown
-	    ;;
-	7)
-	    fg_light_gray
-	    ;;
-	8)
-	    fg_light_gray
-	    # fg_dark_gray
-	    ;;
-	9)
-	    fg_light_blue
-	    ;;
-	10)
-	    fg_light_green
-	    ;;
-	11)
-	    fg_light_cyan
-	    ;;
-	12)
-	    fg_light_red
-	    ;;
-	13)
-	    fg_light_purple
-	    ;;
-	14)
-	    fg_yellow
-	    ;;
-	15)
-	    fg_white
-	    ;;
-    esac
-}
-
-function bg_default() {
-    echo -ne "\033[0;49m"
-}
-
-function bg_black() {
-    echo -ne "\033[0;40m"
-}
-
-function bg_red() {
-    echo -ne "\033[0;41m"
-}
-
-function bg_green() {
-    echo -ne "\033[0;42m"
-}
-
-function bg_yellow() {
-    echo -ne "\033[0;43m"
-}
-
-function bg_blue() {
-    echo -ne "\033[0;44m"
-}
-
-function bg_magenta() {
-    echo -ne "\033[0;45m"
-}
-
-function bg_cyan() {
-    echo -ne "\033[0;46m"
-}
-
-function bg_light_gray() {
-    echo -ne "\033[0;47m"
-}
-
-function bg_dark_gray() {
-    echo -ne "\033[0;100m"
-}
-
-function bg_light_red() {
-    echo -ne "\033[0;101m"
-}
-
-function bg_light_green() {
-    echo -ne "\033[0;102m"
-}
-
-function bg_light_yellow() {
-    echo -ne "\033[0;103m"
-}
-
-function bg_light_blue() {
-    echo -ne "\033[0;104m"
-}
-
-function bg_light_magenta() {
-    echo -ne "\033[0;105m"
-}
-
-function bg_light_cyan() {
-    echo -ne "\033[0;106m"
-}
-
-function bg_white() {
-    echo -ne "\033[0;107m"
-}
-
-
-function bg_random() {
-    local RAND_VAL=$(( RANDOM % 16 ))
-    case $RAND_VAL in
-	0)
-	    bg_black
-	    ;;
-	1)
-	    bg_red
-	    ;;
-	2)
-	    bg_green
-	    ;;
-	3)
-	    bg_yellow
-	    ;;
-	4)
-	    bg_blue
-	    ;;
-	5)
-	    bg_magenta
-	    ;;
-	6)
-	    bg_cyan
-	    ;;
-	7)
-	    bg_light_gray
-	    ;;
-	8)
-	    bg_dark_gray
-	    ;;
-	9)
-	    bg_light_green
-	    ;;
-	10)
-	    bg_light_red
-	    ;;
-	11)
-	    bg_light_yellow
-	    ;;
-	12)
-	    bg_light_blue
-	    ;;
-	13)
-	    bg_light_magenta
-	    ;;
-	14)
-	    bg_light_cyan
-	    ;;
-	15)
-	    bg_white
-	    ;;
-    esac
+function set_color_from_temp()
+{
+    local TEMP=$1
+    local FG=$FG_DEFAULT
+    local BG=$BG_DEFAULT
+    if [ $TEMP -ge 110 ]; then
+        FG=$FG_BLACK
+        BG=$BG_MAGENTA
+    elif [ $TEMP -ge 100 ]; then
+        FG=$FG_BLACK
+        BG=$BG_RED
+    elif [ $TEMP -ge 90 ]; then
+        FG=$FG_BLACK
+        BG=$BG_YELLOW
+    elif [ $TEMP -ge 80 ]; then
+        FG=$FG_BLACK
+        BG=$BG_GREEN
+    elif [ $TEMP -ge 70 ]; then
+        FG=$FG_BLACK
+        BG=$BG_CYAN
+    elif [ $TEMP -ge 60 ]; then
+        FG=$FG_BLACK
+        BG=$BG_BLUE
+    elif [ $TEMP -ge 50 ]; then
+        FG=$FG_BRIGHT_WHITE
+        BG=$BG_BLACK
+    elif [ $TEMP -ge 40 ]; then
+        FG=$FG_BRIGHT_CYAN
+        BG=$BG_BLACK
+    elif [ $TEMP -ge 30 ]; then
+        FG=$FG_BRIGHT_GREEN
+        BG=$BG_BLACK
+    elif [ $TEMP -ge 20 ]; then
+        FG=$FG_BRIGHT_BLUE
+        BG=$BG_BLACK
+    elif [ $TEMP -ge 10 ]; then
+        FG=$FG_BRIGHT_MAGENTA
+        BG=$BG_BLACK
+    elif [ $TEMP -ge 0 ]; then
+        FG=$FG_BRIGHT_WHITE
+        BG=$BG_BRIGHT_CYAN
+    elif [ $TEMP -ge -10 ]; then
+        FG=$FG_BRIGHT_WHITE
+        BG=$BG_BRIGHT_GREEN
+    elif [ $TEMP -ge -20 ]; then
+        FG=$FG_BRIGHT_WHITE
+        BG=$BG_BRIGHT_BLUE
+    else
+        FG=$FG_BRIGHT_WHITE
+        BG=$BG_BRIGHT_MAGENTA
+    fi
+    set_color $FG $BG
 }

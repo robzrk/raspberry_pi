@@ -32,9 +32,7 @@ function get_width() {
 function ctrl_c() {
     kill -9 $DDT_PID
     print_lock_cleanup
-    bg_default
-    fg_default
-    text_normal
+    set_color $FG_DEFAULT $BG_DEFAULT
     print_lock_cleanup
     cm_move_cursor_to_point $HEIGHT 0
     print_lock_cleanup
@@ -44,9 +42,7 @@ function ctrl_c() {
 # This function can only be called when lock is already held
 function clear_specified_line_keep_border() {
     local L=$1
-    bg_default
-    fg_light_purple
-    text_bold
+    set_color $FG_BRIGHT_MAGENTA $BG_DEFAULT
     cm_clear_specified_line $L 0
     cm_move_cursor_to_point $L 0
     echo -n "*"
@@ -56,9 +52,7 @@ function clear_specified_line_keep_border() {
 
 function draw_border() {
     acquire_print_lock
-    bg_default
-    fg_light_purple
-    text_bold
+    set_color $FG_BRIGHT_MAGENTA $BG_DEFAULT
     cm_move_cursor_to_point 1 0
     cm_clear_screen
     local LINE=0
@@ -84,8 +78,7 @@ function draw_border() {
 function spin_one_second() {
     local STAGE=$1
     acquire_print_lock
-    fg_yellow
-    text_bold
+    set_color $FG_BRIGHT_YELLOW $BG_DEFAULT
     cm_move_cursor_to_point $((HEIGHT-3)) $((WIDTH-2))
     case $STAGE in
     0)
@@ -159,21 +152,19 @@ function dump_basic_weather() {
         local COLOR_TEMP=$WINDCHILL
     fi
 
+    COLOR_TEMP=125
+    
     local DISPLAY_LINE=4
     local DISPLAY_COL=3
     acquire_print_lock
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    bg_black
-    fg_color_from_temp $COLOR_TEMP
-    text_bold
+    set_color_from_temp $COLOR_TEMP
     echo -n "$STRING. Humidity ${HUMIDITY}%"
     local DISPLAY_LINE=$((DISPLAY_LINE+1))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    bg_black
-    fg_color_from_temp $COLOR_TEMP
-    text_bold
+    set_color_from_temp $COLOR_TEMP
     echo -n "Wind $WIND_DIR @ ${WIND_MPH}MPH"
     local DISPLAY_LINE=$((DISPLAY_LINE+14))
     if [ $TEMP -ge 100 ]; then
@@ -181,57 +172,17 @@ function dump_basic_weather() {
     else
         local DISPLAY_COL=12
     fi
-    bg_black
-    fg_color_from_temp $COLOR_TEMP
-    text_bold
+    set_color_from_temp $COLOR_TEMP
     print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
     if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
         local DISPLAY_LINE=$((DISPLAY_LINE+8))
         local DISPLAY_COL=14
         clear_specified_line_keep_border $DISPLAY_LINE
         cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-        bg_black
-        fg_color_from_temp $COLOR_TEMP
-        text_bold
+        set_color_from_temp $COLOR_TEMP
         echo -n "${WINDCHILL}ºF windchill"
     fi
     release_print_lock
-}
-
-function fg_color_from_temp()
-{
-    local TEMP=$1
-    if [ $TEMP -ge 110 ]; then
-        fg_light_red
-    elif [ $TEMP -ge 100 ]; then
-        fg_red
-    elif [ $TEMP -ge 90 ]; then
-        fg_brown
-    elif [ $TEMP -ge 80 ]; then
-        fg_yellow
-    elif [ $TEMP -ge 70 ]; then
-        fg_light_green
-    elif [ $TEMP -ge 60 ]; then
-        fg_green
-    elif [ $TEMP -ge 50 ]; then
-        fg_light_cyan
-    elif [ $TEMP -ge 40 ]; then
-        fg_cyan
-    elif [ $TEMP -ge 30 ]; then
-        fg_light_blue
-    elif [ $TEMP -ge 20 ]; then
-        fg_blue
-    elif [ $TEMP -ge 10 ]; then
-        fg_white
-    elif [ $TEMP -ge 0 ]; then
-        fg_light_purple
-    elif [ $TEMP -ge -10 ]; then
-        fg_purple
-    elif [ $TEMP -ge -20 ]; then
-        fg_light_gray
-    else
-        fg_dark_gray
-    fi
 }
 
 function draw_weather() {
@@ -297,9 +248,7 @@ function dump_dt_sender() {
     local DISPLAY_COL=$((WIDTH-1-ATTRIBUTION_LEN))
     acquire_print_lock
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    bg_black
-    fg_dark_gray
-    text_bold
+    set_color $FG_BRIGHT_BLACK $BG_BLACK
     echo -n $ATTRIBUTION
     release_print_lock
 }
@@ -334,9 +283,7 @@ function dump_date() {
     acquire_print_lock
     clear_specified_line_keep_border $DISPLAY_COL
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    bg_black
-    fg_white
-    text_bold
+    set_color $FG_BRIGHT_WHITE $BG_BLACK
     echo -n "$DATE"
     release_print_lock
 }
@@ -355,7 +302,7 @@ function run_loop() {
     release_print_lock
 
     draw_border
-    xdotool mousemove 0 0
+    # xdotool mousemove 0 0
     start_daily_text_display
     local CURRENT_WEATHER_STRING=""
     local PREVIOUS_WEATHER_STRING=""
@@ -363,49 +310,49 @@ function run_loop() {
     local DE_PID=0
     local RUN_CNT=0
     while [ 1 ]; do
-    # Hack - do this until echo statements between threads can run cleanly
-    if [ $RUN_CNT -eq 0 ]; then
-        $SCRIPTS_DIR/check_email.py
-        if [ $? -eq 0 ]; then
-            $SCRIPTS_DIR/read_email.py
-            clear
-            draw_border
-            kill_pid_and_refresh $DDT_PID
-            start_daily_text_display
-            pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
-        else
-            clear
-            draw_border
+        # Hack - do this until echo statements between threads can run cleanly
+        if [ $RUN_CNT -eq 0 ]; then
+            $SCRIPTS_DIR/check_email.py
+            if [ $? -eq 0 ]; then
+                $SCRIPTS_DIR/read_email.py
+                clear
+                draw_border
+                kill_pid_and_refresh $DDT_PID
+                start_daily_text_display
+                pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
+            else
+                clear
+                draw_border
+            fi
         fi
-    fi
-
-    # Update the weather, but display a connection error if there is one
-    if [ $DE_PID -ne 0 ]; then
-        kill_pid_and_refresh $DE_PID
-    fi
-    update_weather
-    if [ $? -ne 0 ]; then
-        kill_pid_and_refresh $RPNB_PID
-        draw_error &
-        DE_PID=$!
-        sleep 3
-        continue
-    else
-        DE_PID=0
-    fi
-    update_sunset
-
-    CURRENT_WEATHER_STRING=`extract_xml_value "$WEATHER" weather`
-    if [ "$CURRENT_WEATHER_STRING" != "$PREVIOUS_WEATHER_STRING" ]; then
-        if [ $RPNB_PID -ne 0 ]; then
+        
+        # Update the weather, but display a connection error if there is one
+        if [ $DE_PID -ne 0 ]; then
+            kill_pid_and_refresh $DE_PID
+        fi
+        update_weather
+        if [ $? -ne 0 ]; then
             kill_pid_and_refresh $RPNB_PID
+            draw_error &
+            DE_PID=$!
+            sleep 3
+            continue
+        else
+            DE_PID=0
         fi
-        run_pass_non_blocking &
-        RPNB_PID=$!
-    fi
-    run_pass_blocking
-    PREVIOUS_WEATHER_STRING=$CURRENT_WEATHER_STRING
-    RUN_CNT=$(((RUN_CNT+1)%10))
+        update_sunset
+        
+        CURRENT_WEATHER_STRING=`extract_xml_value "$WEATHER" weather`
+        if [ "$CURRENT_WEATHER_STRING" != "$PREVIOUS_WEATHER_STRING" ]; then
+            if [ $RPNB_PID -ne 0 ]; then
+                kill_pid_and_refresh $RPNB_PID
+            fi
+            run_pass_non_blocking &
+            RPNB_PID=$!
+        fi
+        run_pass_blocking
+        PREVIOUS_WEATHER_STRING=$CURRENT_WEATHER_STRING
+        RUN_CNT=$(((RUN_CNT+1)%10))
     done
 }
 
@@ -442,12 +389,12 @@ function draw_error() {
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-    scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID fg_light_gray bg_default
-    sleep 1
-    local OFFSET=$((OFFSET+1))
-    if [ $OFFSET -gt $LWID ]; then
-        local OFFSET=0
-    fi
+        scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID $FG_WHITE $BG_DEFAULT
+        sleep 1
+        local OFFSET=$((OFFSET+1))
+        if [ $OFFSET -gt $LWID ]; then
+            local OFFSET=0
+        fi
     done
 }
 
@@ -464,12 +411,12 @@ function draw_clouds() {
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-    scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID fg_white bg_default
-    sleep 1
-    local OFFSET=$((OFFSET+1))
-    if [ $OFFSET -gt $LWID ]; then
-        local OFFSET=0
-    fi
+        scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID $FG_WHITE $BG_DEFAULT
+        sleep 1
+        local OFFSET=$((OFFSET+1))
+        if [ $OFFSET -gt $LWID ]; then
+            local OFFSET=0
+        fi
     done
 }
 
@@ -486,12 +433,12 @@ function draw_overcast() {
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-    scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID fg_light_gray bg_default
-    sleep 1
-    local OFFSET=$((OFFSET+1))
-    if [ $OFFSET -gt $LWID ]; then
-        local OFFSET=0
-    fi
+        scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID $FG_WHITE $BG_DEFAULT
+        sleep 1
+        local OFFSET=$((OFFSET+1))
+        if [ $OFFSET -gt $LWID ]; then
+            local OFFSET=0
+        fi
     done
 }
 
@@ -557,9 +504,9 @@ function draw_sunny() {
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
     while [ 1 ]; do
-    show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL fg_yellow
-    sleep .3
-    local FRAME=$(((FRAME+1)%8))
+        show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL $FG_BRIGHT_YELLOW $BG_DEFAULT
+        sleep .3
+        local FRAME=$(((FRAME+1)%8))
     done
 }
 
@@ -603,9 +550,9 @@ function draw_rain() {
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
     while [ 1 ]; do
-    show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL fg_blue
-    sleep 1
-    local FRAME=$(((FRAME+1)%5))
+        show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL $FG_BLUE $BG_DEFAULT
+        sleep 1
+        local FRAME=$(((FRAME+1)%5))
     done
 }
 
@@ -656,9 +603,9 @@ function draw_clear() {
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
     while [ 1 ]; do
-    show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL fg_white
-    sleep 4
-    local FRAME=$((RANDOM % 6))
+        show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL $FG_BRIGHT_WHITE $BG_DEFAULT
+        sleep 4
+        local FRAME=$((RANDOM % 6))
     done
 }
 
@@ -702,9 +649,9 @@ function draw_snow() {
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
     while [ 1 ]; do
-    show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL fg_white
-    sleep 1
-    local FRAME=$(((FRAME+1)%5))
+        show_frame $FRAME $DISPLAY_LINE $DISPLAY_COL $FG_BRIGHT_WHITE $BG_DEFAULT
+        sleep 1
+        local FRAME=$(((FRAME+1)%5))
     done
 }
 
@@ -743,16 +690,16 @@ function draw_thunderstorm() {
     local OFFSET=0
     local LWID=$((WIDTH-7))
     while [ 1 ]; do
-    show_frame $FRAME $DISPLAY_LINE $((DISPLAY_COL+OFFSET)) fg_yellow
-    sleep 0.2
-    local FRAME=$((RANDOM % 20))
-    local OFFSET=$((RANDOM % LWID))
-    if [ $FRAME -gt 3 ]; then
-        local FRAME=0;
-    fi
-    if [ $FRAME -eq 0 ]; then
-        local OFFSET=0
-    fi
+        show_frame $FRAME $DISPLAY_LINE $((DISPLAY_COL+OFFSET)) $FG_BRIGHT_YELLOW $BG_DEFAULT
+        sleep 0.2
+        local FRAME=$((RANDOM % 20))
+        local OFFSET=$((RANDOM % LWID))
+        if [ $FRAME -gt 3 ]; then
+            local FRAME=0;
+        fi
+        if [ $FRAME -eq 0 ]; then
+            local OFFSET=0
+        fi
     done
 }
 
@@ -769,12 +716,12 @@ function draw_fog() {
     local DISPLAY_COL=3
     local LWID=$((WIDTH-5))
     while [ 1 ]; do
-    scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID fg_light_gray bg_default
-    sleep 0.5
-    local OFFSET=$((OFFSET+1))
-    if [ $OFFSET -gt $LWID ]; then
-        local OFFSET=0
-    fi
+        scroll_image $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID $FG_WHITE $BG_DEFAULT
+        sleep 0.5
+        local OFFSET=$((OFFSET+1))
+        if [ $OFFSET -gt $LWID ]; then
+            local OFFSET=0
+        fi
     done
 }
 
@@ -789,9 +736,7 @@ function scroll_message() {
     local LLINE0=${LLINE0_TMP:0:$LWID}
     
     acquire_print_lock
-    bg_black
-    fg_white
-    text_bold
+    set_color $FG_BRIGHT_WHITE $BG_BLACK
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     echo -n "$LLINE0"
     release_print_lock
@@ -814,9 +759,7 @@ function scroll_image() {
     local LLINE5=${LINE5:$((LWID-OFFSET)):$LWID}${LINE5:0:$((LWID-OFFSET))}
     
     acquire_print_lock
-    $BG_COLOR_FN
-    $FG_COLOR_FN
-    text_bold
+    set_color $FG_COLOR_FN $BG_COLOR_FN
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
     echo -n "$LLINE0"
     cm_move_cursor_to_point $((DISPLAY_LINE+1)) $DISPLAY_COL
@@ -838,11 +781,10 @@ function show_frame() {
     local DISPLAY_LINE=$2
     local DISPLAY_COL=$3
     local FG_COLOR_FN=$4
+    local BG_COLOR_FN=$5
 
     acquire_print_lock
-    bg_default
-    $FG_COLOR_FN
-    text_bold
+    set_color $FG_COLOR_FN $BG_COLOR_FN
     case $FRAME in
     0)
         cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
