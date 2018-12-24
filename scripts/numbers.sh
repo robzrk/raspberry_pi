@@ -216,12 +216,8 @@ function large_nine(){
     echo -n        "9"
     cm_move_cursor_to_point $((L+3)) $((C+1))
     echo -n  "9999999"
-    cm_move_cursor_to_point $((L+4)) $C
-    echo -n "9"
     cm_move_cursor_to_point $((L+4)) $((C+7))
     echo -n        "9"
-    cm_move_cursor_to_point $((L+5)) $C
-    echo -n "9"
     cm_move_cursor_to_point $((L+5)) $((C+7))
     echo -n        "9"
     cm_move_cursor_to_point $((L+6)) $C
