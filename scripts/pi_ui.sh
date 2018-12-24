@@ -55,6 +55,8 @@ function clear_specified_line_keep_border() {
 }
 
 function draw_border() {
+    # No border for now.
+    return 0
     acquire_print_lock
     bg_default
     fg_light_purple
