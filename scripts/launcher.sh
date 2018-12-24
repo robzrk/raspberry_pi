@@ -11,12 +11,13 @@ fi
 
 echo "running!" >> /tmp/launcher_log
 
-IPADDR=`ifconfig | grep wlan0 -A 5 | grep inet | grep -v inet6 | awk '{ print $2 }'`
-echo "Starting VNC server at ${IPADDR}:1 ..."
 vncserver :1
 
 echo "Updating repo ..."
 $SCRIPTS_DIR/update_repo.sh
+
+IPADDR=`ifconfig | grep wlan0 -A 5 | grep inet | grep -v inet6 | awk '{ print $2 }'`
+echo "Started VNC server at ${IPADDR}:1 ..."
 
 sleep 1 
 
