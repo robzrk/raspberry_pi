@@ -160,17 +160,21 @@ def extract_content_from_email(target_emails, use_text_if_found):
         from_address = re.sub('[<>]', '',
                               email_message.get('From').split(" ")[-1])
         display_name = config['email_display_names'][from_address]
+        subject = email_message.get('Subject')
         logging.info('Parsing email from: %s', from_address)
         logging.info('Displaying name: %s', display_name)
         logging.info('Sent: %s', email_message.get('Date'))
+        logging.info('Subject: %s', subject)
         
-        # Generate daily_text or daily_photo files for this email
+        # Generate daily_photo file for this email
         for part in email_message.walk():
             if part.get_content_type() == 'image/jpeg' or \
                part.get_content_type() == 'image/png':
                 write_daily_photo(part.get_payload(decode=True))
-            if use_text_if_found and part.get_content_type() == 'text/plain':
-                write_daily_text(part.get_payload(), display_name)
+
+        # Generate daily_text file for this email
+        if use_text_if_found and subject != '':
+            write_daily_text(subject, display_name)
 
 def write_daily_photo(message_payload):
     logging.info(' ** Found photo!')
