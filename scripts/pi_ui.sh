@@ -151,20 +151,18 @@ function dump_basic_weather() {
     if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
         local COLOR_TEMP=$WINDCHILL
     fi
-
-    COLOR_TEMP=125
     
     local DISPLAY_LINE=4
     local DISPLAY_COL=3
     acquire_print_lock
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    set_color_from_temp $COLOR_TEMP
+    set_color $FG_BRIGHT_WHITE $BG_BLACK
     echo -n "$STRING. Humidity ${HUMIDITY}%"
     local DISPLAY_LINE=$((DISPLAY_LINE+1))
     clear_specified_line_keep_border $DISPLAY_LINE
     cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-    set_color_from_temp $COLOR_TEMP
+    set_color $FG_BRIGHT_WHITE $BG_BLACK
     echo -n "Wind $WIND_DIR @ ${WIND_MPH}MPH"
     local DISPLAY_LINE=$((DISPLAY_LINE+14))
     if [ $TEMP -ge 100 ]; then
@@ -179,7 +177,7 @@ function dump_basic_weather() {
         local DISPLAY_COL=14
         clear_specified_line_keep_border $DISPLAY_LINE
         cm_move_cursor_to_point $DISPLAY_LINE $DISPLAY_COL
-        set_color_from_temp $COLOR_TEMP
+        set_color $FG_BRIGHT_WHITE $BG_BLACK
         echo -n "${WINDCHILL}ºF windchill"
     fi
     release_print_lock
