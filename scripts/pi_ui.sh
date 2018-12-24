@@ -1,8 +1,6 @@
 #!/bin/bash
 
-#DEBUG
-#set -x
-
+LOG_PATH=/tmp/pi_ui.log
 SCRIPTS_DIR=~/raspberry_pi/scripts
 source $SCRIPTS_DIR/cursor_manipulation.sh
 source $SCRIPTS_DIR/colors.sh
@@ -10,6 +8,11 @@ source $SCRIPTS_DIR/numbers.sh
 source $SCRIPTS_DIR/print_lib.sh
 
 trap ctrl_c INT
+
+function log() {
+    local LOG_MSG=$1
+    echo "`date`: $LOG_MSG" >> $LOG_PATH
+}
 
 # Emacs terminal
 # function get_height() {
@@ -124,6 +127,7 @@ function extract_xml_forecast() {
 }
 
 function update_weather() {
+    log "Updating weather for ${GROUP_LOCATION}"
     WEATHER=`curl -s https://w1.weather.gov/xml/current_obs/${GROUP_LOCATION}.xml`
     return $?
     # echo $WEATHER > weather.xml
@@ -134,6 +138,7 @@ function update_weather() {
 }
 
 function update_sunset() {
+    log "Updating sunset"
     SUNSET=`curl -s https://api.sunrise-sunset.org/json?lat=44.97\&lng=-93.25&date=today`
     return $?
 }
@@ -151,6 +156,10 @@ function dump_basic_weather() {
     if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
         local COLOR_TEMP=$WINDCHILL
     fi
+    log "temp: $TEMP"
+    log "weather: $STRING"
+    log "humidity: $HUMIDITY"
+    log "windchill: $WINDCHILL"
     
     local DISPLAY_LINE=4
     local DISPLAY_COL=3
@@ -207,6 +216,8 @@ function draw_weather_aux() {
     else
         local IS_DAYTIME=0
     fi
+
+    log "Weather string is $WEATHER_STRING"
     
     if [[ $WEATHER_STRING == *"Cloud"* ]]; then
         draw_clouds
@@ -264,6 +275,7 @@ function display_daily_text() {
     local MESSAGE_IN=`cat $SCRIPTS_DIR/daily_text | tr -d '\r' | tr -d '\n'`
     MESSAGE="${MESSAGE_IN}     "
     local MSG_LEN=${#MESSAGE}
+    log "daily_text: [${MESSAGE}]"
     while [ 1 ]; do
         scroll_message $OFFSET $DISPLAY_LINE $DISPLAY_COL $LWID
         sleep .1
@@ -312,6 +324,7 @@ function run_loop() {
         if [ $RUN_CNT -eq 0 ]; then
             $SCRIPTS_DIR/check_email.py
             if [ $? -eq 0 ]; then
+                log "Found new messages"
                 $SCRIPTS_DIR/read_email.py
                 clear
                 draw_border
@@ -404,6 +417,8 @@ function draw_clouds() {
     LINE4="   ______      (__)         _      "
     LINE5="  (______)                 (_)     "
 
+    log "in draw_clouds"
+
     local OFFSET=0
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
@@ -425,6 +440,8 @@ function draw_overcast() {
     LINE3="                                   "
     LINE4="                                   "
     LINE5="                                   "
+
+    log "in draw_overcast"
 
     local OFFSET=0
     local DISPLAY_LINE=7
@@ -497,6 +514,7 @@ function draw_sunny() {
     LINE4_7="             \_____/             "
     LINE5_7="                                 "
 
+    log "in draw_sunny"
     
     local FRAME=0
     local DISPLAY_LINE=7
@@ -544,6 +562,8 @@ function draw_rain() {
     LINE4_4="            \       \    \         "
     LINE5_4="  \   \   \       \      \    \   \ "
     
+    log "in draw_rain"
+
     local FRAME=0
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
@@ -597,6 +617,8 @@ function draw_clear() {
     LINE4_5="       .                        .  "
     LINE5_5="                    .     .        "
 
+    log "in draw_clear"
+
     local FRAME=0
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
@@ -643,6 +665,8 @@ function draw_snow() {
     LINE4_4="*            *       *    *      * "
     LINE5_4="      *   *       *      *    *   *"
     
+    log "in draw_snow"
+
     local FRAME=0
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
@@ -682,6 +706,8 @@ function draw_thunderstorm() {
     LINE4_3=""
     LINE5_3=""
 
+    log "in draw_thunderstorm"
+
     local FRAME=0
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
@@ -709,6 +735,8 @@ function draw_fog() {
     LINE4="########################@#########"
     LINE5="@#############@###########@#######"
     
+    log "in draw_fog"
+
     local OFFSET=0
     local DISPLAY_LINE=7
     local DISPLAY_COL=3
@@ -911,5 +939,6 @@ PL=0
 ################################################################################
 ## Main
 ################################################################################
+log "pi_ui.sh started"
 cm_hide_cursor
 run_loop
