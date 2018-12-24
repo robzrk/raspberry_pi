@@ -365,14 +365,17 @@ function run_loop() {
     while [ 1 ]; do
     # Hack - do this until echo statements between threads can run cleanly
     if [ $RUN_CNT -eq 0 ]; then
-        clear
-        draw_border
         $SCRIPTS_DIR/check_email.py
         if [ $? -eq 0 ]; then
             $SCRIPTS_DIR/read_email.py
+            clear
+            draw_border
             kill_pid_and_refresh $DDT_PID
             start_daily_text_display
             pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
+        else
+            clear
+            draw_border
         fi
     fi
 
