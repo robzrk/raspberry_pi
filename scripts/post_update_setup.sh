@@ -8,9 +8,9 @@ function log() {
 
 which sendmail > /dev/null
 if [ $? -eq 0 ]; then
-    log "Nothing to do" > $UPDATE_LOG
+    log "Nothing to do"
 else
-    log "Installing sendmail" > $UPDATE_LOG
+    log "Installing sendmail"
     export DEBIAN_FRONTEND=noninteractive
     sudo apt-get -y install sendmail
 fi
