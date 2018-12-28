@@ -9,6 +9,7 @@ function log() {
 }
 
 log "Launcher started"
+sleep 5
 
 log "Scheduling debug log..."
 lxterminal -e "sleep 500; $SCRIPTS_DIR/generate_log_email.sh" &
