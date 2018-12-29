@@ -2,12 +2,6 @@
 SCRIPTS_DIR=~/raspberry_pi/scripts
 LOG_PATH=/tmp/launcher.log
 
-function log() {
-    local LOG_MSG=$1
-    echo $LOG_MSG
-    echo "`date`: $LOG_MSG" >> $LOG_PATH
-}
-
 log "Launcher started"
 sleep 5
 
