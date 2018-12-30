@@ -234,6 +234,7 @@ def resize_photo():
         else:
             rotation = '0'
 
+        logging.info('Changing rotation to %s', rotation)
         photo_size = subprocess.check_output(['mogrify',
                                               '-resize', scale_percentage,
                                               '-rotate', rotation,
