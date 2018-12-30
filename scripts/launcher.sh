@@ -2,43 +2,37 @@
 SCRIPTS_DIR=~/raspberry_pi/scripts
 LOG_PATH=/tmp/launcher.log
 
-function log() {
-    local LOG_MSG=$1
-    echo $LOG_MSG
-    echo "`date`: $LOG_MSG" >> $LOG_PATH
-}
-
-log "Launcher started"
+echo "Launcher started" > $LOG_PATH
 sleep 5
 
-log "Scheduling debug log..."
+echo "Scheduling debug log..." >> $LOG_PATH
 lxterminal -e "sleep 500; $SCRIPTS_DIR/generate_log_email.sh" &
 
 # Only run this launcher once per boot!
 if [ -f /tmp/launcher_started ]; then
-    log "Launcher was previously started, exiting!"
+    echo "Launcher was previously started, exiting!">> $LOG_PATH
     sleep 1
     exit 1
 else
-    log "first call for this boot"
+    echo "first call for this boot" >> $LOG_PATH
     touch /tmp/launcher_started
 fi
 
-log "starting vnc server..."
+echo "starting vnc server..."  >> $LOG_PATH
 vncserver :1
 
-log "Updating repo..."
+echo "Updating repo..." >> $LOG_PATH
 $SCRIPTS_DIR/update_repo.sh
 
 IPADDR=`ifconfig | grep wlan0 -A 5 | grep inet | grep -v inet6 | awk '{ print $2 }'`
-log "Started VNC server at ${IPADDR}:1 ..."
+echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
 
 sleep 1 
 
-log "Reading the lastest emails ..."
+echo "Reading the lastest emails ..." >> $LOG_PATH
 $SCRIPTS_DIR/read_email.py
 
-log "Launching pi_ui ..."
+echo "Launching pi_ui ..." >> $LOG_PATH
 nohup lxterminal -e $SCRIPTS_DIR/pi_ui.sh
 
 exit 0
