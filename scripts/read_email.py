@@ -214,8 +214,30 @@ def resize_photo():
     if (scale_percentage != "100%"):
         logging.info('Scaling photo to %s of its original size',
                      scale_percentage)
-        photo_size = subprocess.check_output(['mogrify', '-resize',
-                                              scale_percentage, _photo_path])
+        orientation = subprocess.check_output(['identify', '-format', '\'%[EXIF:orientation]\'', _photo_path])
+        # TopLeft  - 1
+        # LeftTop  - 5
+        if (orientation == '0'):
+            rotation = '0'
+        # TopRight  - 2
+        # RightTop  - 6
+        elif (orientation == '1'):
+            rotation = '90'
+        # BottomRight  - 3
+        # RightBottom  - 7
+        elif (orientation == '2'):
+            rotation = '180'
+        # BottomLeft  - 4
+        # LeftBottom  - 8
+        elif (orientation == '3'):
+            rotation = '270'
+        else:
+            rotation = '0'
+
+        photo_size = subprocess.check_output(['mogrify',
+                                              '-resize', scale_percentage,
+                                              '-rotate', rotation,
+                                              _photo_path])
     else:
         logging.info('Photo does not need scaling')
 
