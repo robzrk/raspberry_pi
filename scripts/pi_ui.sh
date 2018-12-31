@@ -326,11 +326,16 @@ function run_loop() {
             if [ $? -eq 0 ]; then
                 log "Found new messages"
                 $SCRIPTS_DIR/read_email.py
+                log "Refreshing background"
+                pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
+                log "Read new messages"
                 clear
                 draw_border
-                kill_pid_and_refresh $DDT_PID
-                start_daily_text_display
-                pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
+                ps -ef | grep $DDT_PID | grep -v grep > /dev/null
+                if [ $? -eq 0 ]; then                
+                    kill_pid_and_refresh $DDT_PID
+                    start_daily_text_display
+                fi
             else
                 clear
                 draw_border
