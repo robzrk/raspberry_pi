@@ -219,19 +219,19 @@ def resize_photo():
         # TopLeft  - 1
         # LeftTop  - 5
         if (orientation == "'1'") or (orientation == "'5'"):
-            rotation = '0'
+            rotation = '180'
         # TopRight  - 2
         # RightTop  - 6
         elif (orientation == "'2'") or (orientation == "'6'"):
-            rotation = '90'
+            rotation = '270'
         # BottomRight  - 3
         # RightBottom  - 7
         elif (orientation == "'3'") or (orientation == "'7'"):
-            rotation = '180'
+            rotation = '0'
         # BottomLeft  - 4
         # LeftBottom  - 8
         elif (orientation == "'4'") or (orientation == "'8'"):
-            rotation = '270'
+            rotation = '90'
         else:
             rotation = '0'
 
