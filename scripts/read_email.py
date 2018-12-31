@@ -232,7 +232,7 @@ def resize_photo():
         # LeftBottom  - 8
         elif (orientation == "'4'") or (orientation == "'8'"):
             rotation = '270'
-            else:
+        else:
             rotation = '0'
 
         logging.info('Changing rotation to %s', rotation)
