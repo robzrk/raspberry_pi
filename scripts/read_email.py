@@ -234,10 +234,14 @@ def resize_photo():
         else:
             rotation = '0'
 
-        logging.info('Changing rotation to %s', rotation)
+        # logging.info('Changing rotation to %s', rotation)
+        # photo_size = subprocess.check_output(['mogrify',
+        #                                       '-resize', scale_percentage,
+        #                                       '-rotate', rotation,
+        #                                       _photo_path])
+        logging.info('Will not change rotation to %s', rotation)
         photo_size = subprocess.check_output(['mogrify',
                                               '-resize', scale_percentage,
-                                              '-rotate', rotation,
                                               _photo_path])
     else:
         logging.info('Photo does not need scaling')
