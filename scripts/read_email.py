@@ -215,6 +215,7 @@ def resize_photo():
         logging.info('Scaling photo to %s of its original size',
                      scale_percentage)
         orientation = subprocess.check_output(['identify', '-format', '\'%[EXIF:orientation]\'', _photo_path])
+        logging.info('Orientation is %s', orientation)
         # TopLeft  - 1
         # LeftTop  - 5
         if (orientation == '1') or (orientation == '5'):
