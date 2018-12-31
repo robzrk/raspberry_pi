@@ -52,6 +52,7 @@ def get_todays_group_emails():
     return group_email_addrs
     
 def read_emails():
+    rc = 0
     # Check email, generate daily_text and daily_photo files
     with IMAPClient(host="smtp.gmail.com") as client:
         client.login('sendittopi', 'IwI9YB!S2P&^')
@@ -152,6 +153,8 @@ def read_emails():
                 fh.close()
             except:
                 logging.warning('Failed to write %s', _dl_email_info_path)
+            rc = 1
+    return rc
                 
 def extract_content_from_email(target_emails, use_text_if_found):
     # Parse photo email - should just have one item in photo_email
@@ -205,13 +208,13 @@ def write_daily_text(message_text, display_name):
             logging.warning('Failed to write %s', _text_path)
             
 # Read in photo height and scale it down, in place, to target height
-def resize_photo():
+def resize_photo(new_emails):
     logging.info('Resizing photo...')
     photo_height = int(subprocess.check_output(['convert', _photo_path,
                                             '-print', '%h', '/dev/null']))
     logging.info('Original photo height: %d', photo_height)
     scale_percentage = '%d%%' % (_target_photo_height * 100 / photo_height)
-    if (scale_percentage != "100%"):
+    if ((new_emails == 1) and (scale_percentage != "100%")):
         logging.info('Scaling photo to %s of its original size',
                      scale_percentage)
         orientation = subprocess.check_output(['identify', '-format', '\'%[EXIF:orientation]\'', _photo_path])
@@ -219,19 +222,19 @@ def resize_photo():
         # TopLeft  - 1
         # LeftTop  - 5
         if (orientation == "'1'") or (orientation == "'5'"):
-            rotation = '180'
+            rotation = '0'
         # TopRight  - 2
         # RightTop  - 6
         elif (orientation == "'2'") or (orientation == "'6'"):
-            rotation = '270'
+            rotation = '90'
         # BottomRight  - 3
         # RightBottom  - 7
         elif (orientation == "'3'") or (orientation == "'7'"):
-            rotation = '0'
+            rotation = '180'
         # BottomLeft  - 4
         # LeftBottom  - 8
         elif (orientation == "'4'") or (orientation == "'8'"):
-            rotation = '90'
+            rotation = '270'
         else:
             rotation = '0'
 
@@ -251,6 +254,6 @@ def teardown():
 
 # main
 setup()
-read_emails()
-resize_photo()
+new_emails = read_emails()
+resize_photo(new_emails)
 teardown()
