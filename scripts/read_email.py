@@ -8,6 +8,7 @@ import logging
 import subprocess
 import os
 from imapclient import IMAPClient
+from email.header import decode_header
 # globals
 _max_text_size = 32768
 _target_photo_height = 450
@@ -164,6 +165,18 @@ def extract_content_from_email(target_emails, use_text_if_found):
                               email_message.get('From').split(" ")[-1])
         display_name = config['email_display_names'][from_address]
         subject = email_message.get('Subject')
+        try:
+            (value, charset) = decode_header(subject)[0]
+            logging.info('charset: %s', charset)
+            logging.info('value: %s', value)
+        except:
+            logging.warn('Could not determine charset')
+
+        try:
+            subject = value.decode(charset).encode('utf-8')
+        except:
+            logging.warn('Could not decode charset %s', charset)
+
         logging.info('Parsing email from: %s', from_address)
         logging.info('Displaying name: %s', display_name)
         logging.info('Sent: %s', email_message.get('Date'))
