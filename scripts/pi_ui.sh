@@ -151,7 +151,7 @@ function dump_basic_weather() {
     local WIND_MPH=`extract_xml_value "$WEATHER" wind_mph`
     local HUMIDITY=`extract_xml_value "$WEATHER" relative_humidity`
     local WINDCHILL=`extract_xml_value "$WEATHER" windchill_f`
-    local WINDCHILL=`echo $WINDCHILL | sed "s/\([0-9]*\).*/\1/g"`
+    local WINDCHILL=`echo $WINDCHILL | sed "s/\(-[0-9]*\).*/\1/g"`
     local COLOR_TEMP=$TEMP
     if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
         local COLOR_TEMP=$WINDCHILL
