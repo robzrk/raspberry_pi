@@ -2,6 +2,9 @@
 SCRIPTS_DIR=~/raspberry_pi/scripts
 LOG_PATH=/tmp/launcher.log
 
+sudo pigpiod
+$SCRIPTS_DIR/led.py -c red
+
 echo "Launcher started" >> $LOG_PATH
 
 # Only run this launcher once per boot!
@@ -52,7 +55,9 @@ $SCRIPTS_DIR/read_email.py | tee -a $LOG_PATH
 log "Refreshing background"
 pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo | tee -a $LOG_PATH
 
+
 echo "Launching pi_ui ..." >> $LOG_PATH
 nohup lxterminal -e sh -c "$SCRIPTS_DIR/pi_ui.sh 2> /tmp/pi_ui_errors.log"
+
 
 exit 0

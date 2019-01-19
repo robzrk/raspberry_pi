@@ -184,6 +184,7 @@ function dump_basic_weather() {
         local DISPLAY_COL=12
     fi
     set_color_from_temp $COLOR_TEMP
+    set_leds_from_temp $COLOR_TEMP
     print_large_number $TEMP $DISPLAY_LINE $DISPLAY_COL
     if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
         local DISPLAY_LINE=$((DISPLAY_LINE+8))

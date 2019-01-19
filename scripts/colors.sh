@@ -36,6 +36,8 @@ BG_BRIGHT_CYAN=106
 BG_BRIGHT_WHITE=107
 BG_DEFAULT=49
 
+SCRIPTS_DIR=~/raspberry_pi/scripts
+
 function set_color() {
     local FG=$1
     local BG=$2
@@ -94,4 +96,31 @@ function set_color_from_temp()
         BG=$BG_BRIGHT_MAGENTA
     fi
     set_color $FG $BG
+}
+
+function set_leds_from_temp()
+{
+    local TEMP=$1
+    $SCRIPTS_DIR/led.py -t $TEMP
+    # if [ $TEMP -ge 110 ]; then
+    #     $SCRIPTS_DIR/led.py -c white # blinking red
+    # elif [ $TEMP -ge 90 ]; then
+    #     $SCRIPTS_DIR/led.py -c red
+    # elif [ $TEMP -ge 75 ]; then
+    #     $SCRIPTS_DIR/led.py -c orange
+    # elif [ $TEMP -ge 65 ]; then
+    #     $SCRIPTS_DIR/led.py -c yellow
+    # elif [ $TEMP -ge 50 ]; then
+    #     $SCRIPTS_DIR/led.py -c green
+    # elif [ $TEMP -ge 32 ]; then
+    #     $SCRIPTS_DIR/led.py -c blue
+    # elif [ $TEMP -ge 15 ]; then
+    #     $SCRIPTS_DIR/led.py -c cyan
+    # elif [ $TEMP -ge 0 ]; then
+    #     $SCRIPTS_DIR/led.py -c purple
+    # elif [ $TEMP -ge -15 ]; then
+    #     $SCRIPTS_DIR/led.py -c white
+    # else
+    #     $SCRIPTS_DIR/led.py -c red
+    # fi
 }
