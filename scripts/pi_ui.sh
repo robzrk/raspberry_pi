@@ -128,7 +128,8 @@ function extract_xml_forecast() {
 
 function update_weather() {
     log "Updating weather for ${GROUP_LOCATION}"
-    WEATHER=`curl -s https://w1.weather.gov/xml/current_obs/${GROUP_LOCATION}.xml`
+    WEATHER=`curl -s https://w1.weather.gov/xml/current_obs/display.php?stid=${GROUP_LOCATION}`
+    #log "$WEATHER"
     return $?
     # echo $WEATHER > weather.xml
     # WEATHER=`cat weather.xml`
@@ -145,18 +146,19 @@ function update_sunset() {
 
 function dump_basic_weather() {
     local TEMP=`extract_xml_value "$WEATHER" temp_f`
-    local TEMP=`echo $TEMP | sed "s/\([0-9]*\).*/\1/g"`
+    local TEMP=`echo $TEMP | sed "s/\([-]*[0-9]*\).*/\1/g"`
     local STRING=`extract_xml_value "$WEATHER" weather`
     local WIND_DIR=`extract_xml_value "$WEATHER" wind_dir`
     local WIND_MPH=`extract_xml_value "$WEATHER" wind_mph`
     local HUMIDITY=`extract_xml_value "$WEATHER" relative_humidity`
     local WINDCHILL=`extract_xml_value "$WEATHER" windchill_f`
-    local WINDCHILL=`echo $WINDCHILL | sed "s/\(-[0-9]*\).*/\1/g"`
+    local WINDCHILL=`echo $WINDCHILL | sed "s/\([-]*[0-9]*\).*/\1/g"`
     local COLOR_TEMP=$TEMP
     if [[ ( "$WINDCHILL" != "$TEMP" ) && ( "$WINDCHILL" != "" ) ]]; then
         local COLOR_TEMP=$WINDCHILL
     fi
     log "temp: $TEMP"
+    log "color_temp: $COLOR_TEMP"
     log "weather: $STRING"
     log "humidity: $HUMIDITY"
     log "windchill: $WINDCHILL"
@@ -176,6 +178,8 @@ function dump_basic_weather() {
     local DISPLAY_LINE=$((DISPLAY_LINE+14))
     if [ $TEMP -ge 100 ]; then
         local DISPLAY_COL=7
+    elif [ $TEMP -eq 0 ]; then
+        local DISPLAY_COL=16
     else
         local DISPLAY_COL=12
     fi
