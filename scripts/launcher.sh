@@ -29,9 +29,6 @@ echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
 
 sleep 1 
 
-echo "Reading the lastest emails ..." >> $LOG_PATH
-$SCRIPTS_DIR/read_email.py
-
 echo "Launching pi_ui ..." >> $LOG_PATH
 nohup lxterminal -e $SCRIPTS_DIR/pi_ui.sh
 
