@@ -24,7 +24,7 @@ else
     sudo apt-get -y install ntpdate
 fi
 
-which ntp > /dev/null
+which ntpd > /dev/null
 if [ $? -eq 0 ]; then
     log "Nothing to do"
 else
