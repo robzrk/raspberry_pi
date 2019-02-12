@@ -29,8 +29,6 @@ echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
 
 sleep 1 
 
-ntpdate -d us.pool.ntp.org
-
 echo "Reading the lastest emails ..." >> $LOG_PATH
 $SCRIPTS_DIR/read_email.py
 
