@@ -29,6 +29,14 @@ echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
 
 sleep 1 
 
+echo "Waiting for date to be updated ..." >> $LOG_PATH
+RC=-1
+while [ $RC -ne 0 ]; do
+    ps -ef | grep systemd-timesyncd | grep -v grep > /dev/null
+    RC=$?
+    sleep 1
+done
+
 echo "Reading the lastest emails ..." >> $LOG_PATH
 $SCRIPTS_DIR/read_email.py
 
