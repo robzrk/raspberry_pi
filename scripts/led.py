@@ -26,8 +26,8 @@ class Threshold(int):
     CYAN       = 32
     BLUE       = 15
     PURPLE     = 0
-    WHITE_COLD = -15
-    RED_COLD   = -100
+    WHITE_COLD = -10
+    RED_COLD   = -20
 
 class RedDC(int):
     RED   = 255
