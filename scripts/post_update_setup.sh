@@ -15,3 +15,11 @@ else
     sudo apt-get -y install sendmail
 fi
 
+which ntpdate > /dev/null
+if [ $? -eq 0 ]; then
+    log "Nothing to do"
+else
+    log "Installing ntp"
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt-get -y install ntpdate
+fi
