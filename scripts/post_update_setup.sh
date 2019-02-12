@@ -19,7 +19,16 @@ which ntpdate > /dev/null
 if [ $? -eq 0 ]; then
     log "Nothing to do"
 else
-    log "Installing ntp"
+    log "Installing ntpdate"
     export DEBIAN_FRONTEND=noninteractive
     sudo apt-get -y install ntpdate
+fi
+
+which ntp > /dev/null
+if [ $? -eq 0 ]; then
+    log "Nothing to do"
+else
+    log "Installing ntp"
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt-get -y install ntp
 fi

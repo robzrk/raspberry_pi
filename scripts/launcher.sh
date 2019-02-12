@@ -29,6 +29,14 @@ echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
 
 sleep 1 
 
+which ntpdate > /dev/null
+if [ $? -eq 0 ]; then
+    log "Manually updating NTP clock..."
+    sudo /etc/init.d/ntp stop
+    sudo ntpd -q -g
+    sudo /etc/init.d/ntp start
+fi
+
 echo "Reading the lastest emails ..." >> $LOG_PATH
 $SCRIPTS_DIR/read_email.py
 
