@@ -29,11 +29,18 @@ echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
 
 sleep 1 
 
-echo "Waiting for date to be updated ..." >> $LOG_PATH
+echo "Waiting for systemd-timesyncd to start..." >> $LOG_PATH
 RC=-1
 while [ $RC -ne 0 ]; do
     ps -ef | grep systemd-timesyncd | grep -v grep > /dev/null
     RC=$?
+    sleep 1
+done
+
+echo "Waiting for date to be updated ..." >> $LOG_PATH
+DATE_SYNCED=""
+while [ "$DATE_SYNCED" != "yes" ]; do 
+    DATE_SYNCED=`timedatectl | grep sync | awk '{ print $3 }'`
     sleep 1
 done
 
