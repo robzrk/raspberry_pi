@@ -46,6 +46,8 @@ done
 
 echo "Reading the lastest emails ..." >> $LOG_PATH
 $SCRIPTS_DIR/read_email.py
+log "Refreshing background"
+pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
 
 echo "Launching pi_ui ..." >> $LOG_PATH
 nohup lxterminal -e $SCRIPTS_DIR/pi_ui.sh
