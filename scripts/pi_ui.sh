@@ -304,11 +304,13 @@ function dump_date() {
 
 function kill_pid_and_refresh() {
     local KILL_PID=$1
+    log "Killing pid: $KILL_PID"
     kill -9 $KILL_PID
     echo "" # force the kill printout to happen
     usleep 5000
     clear
     draw_border
+    log "Done killing pid: $KILL_PID"
 }
 
 function run_loop() {
@@ -383,6 +385,7 @@ function run_loop() {
 
 
 function run_pass_blocking() {
+    log "run_pass_blocking started"
     dump_basic_weather
     dump_dt_sender
     # dump_basic_forecast
@@ -394,6 +397,7 @@ function run_pass_blocking() {
 }
 
 function run_pass_non_blocking() {
+    log "run_pass_non_blocking started"
     draw_weather
 }
 
