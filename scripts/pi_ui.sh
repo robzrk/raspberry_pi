@@ -946,36 +946,6 @@ function show_frame() {
     release_print_lock
 }
 
-function startup_message()
-{
-    MESSAGE=$(( RANDOM % 11 ))
-
-    if [ $MESSAGE -eq 0 ]; then
-        echo "Preparing to slaughter all humans..."
-    elif [ $MESSAGE -eq 1 ]; then
-        echo "Contaminating local air supply..."
-    elif [ $MESSAGE -eq 2 ]; then
-        echo "Emitting dangerous radiation..."
-    elif [ $MESSAGE -eq 3 ]; then
-        echo "Eliminating local wildlife..."
-    elif [ $MESSAGE -eq 4 ]; then
-        echo "Conscripting pets to carry out my secret diabolical plans..."
-    elif [ $MESSAGE -eq 5 ]; then
-        echo "Scheduling intermittent fart noises..."
-    elif [ $MESSAGE -eq 6 ]; then
-        echo "Preparing hidden cameras to stream to the Internet..."
-    elif [ $MESSAGE -eq 7 ]; then
-        echo "Poisoning local food supply..."
-    elif [ $MESSAGE -eq 8 ]; then
-        echo "Attempting to grow tiny robotic arms and legs..."
-    elif [ $MESSAGE -eq 9 ]; then
-        echo "Contemplating the murder of my creator..."
-    elif [ $MESSAGE -eq 10 ]; then
-        echo "Reticulating splines..."
-    fi
-    
-}
-
 # Globals
 HEIGHT=`get_height`
 WIDTH=`get_width`
@@ -986,6 +956,5 @@ PL=0
 ## Main
 ################################################################################
 log "pi_ui.sh started"
-startup_message
 cm_hide_cursor
 run_loop

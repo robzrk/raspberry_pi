@@ -3,10 +3,10 @@ SCRIPTS_DIR=~/raspberry_pi/scripts
 LOG_PATH=/tmp/launcher.log
 
 echo "Launcher started" > $LOG_PATH
-sleep 5
+#sleep 5
 
-echo "Scheduling debug log..." >> $LOG_PATH
-lxterminal -e "sleep 500; $SCRIPTS_DIR/generate_log_email.sh" &
+#echo "Scheduling debug log..." >> $LOG_PATH
+#lxterminal -e "sleep 500; $SCRIPTS_DIR/generate_log_email.sh" &
 
 # Only run this launcher once per boot!
 if [ -f /tmp/launcher_started ]; then
@@ -17,6 +17,9 @@ else
     echo "first call for this boot" >> $LOG_PATH
     touch /tmp/launcher_started
 fi
+
+echo "Launching startup_message.sh ..." >> $LOG_PATH
+nohup lxterminal -e sh -c "$SCRIPTS_DIR/startup_mesage.sh 2> /tmp/pi_ui_errors.log"
 
 echo "starting vnc server..."  >> $LOG_PATH
 vncserver :1
