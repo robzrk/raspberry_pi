@@ -2,7 +2,7 @@
 SCRIPTS_DIR=~/raspberry_pi/scripts
 LOG_PATH=/tmp/launcher.log
 
-echo "Launcher started" > $LOG_PATH
+echo "Launcher started" >> $LOG_PATH
 #sleep 5
 
 #echo "Scheduling debug log..." >> $LOG_PATH
@@ -19,7 +19,7 @@ else
 fi
 
 echo "Launching startup_message.sh ..." >> $LOG_PATH
-nohup lxterminal -e sh -c "$SCRIPTS_DIR/startup_mesage.sh 2> /tmp/pi_ui_errors.log"
+nohup lxterminal -e $SCRIPTS_DIR/startup_message.sh
 
 echo "starting vnc server..."  >> $LOG_PATH
 vncserver :1
