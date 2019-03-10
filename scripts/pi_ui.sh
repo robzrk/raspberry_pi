@@ -210,10 +210,7 @@ function draw_weather_aux() {
     local DISPLAY_COL=$3
 
     local SUNSET_TIME=`extract_json_value "$SUNSET" sunset`
-    local SUNSET_TIME_FMT=`echo $SUNSET_TIME | sed "s/://g" | head -c 4`
-    SUNSET_TIME_FMT=$(( SUNSET_TIME_FMT + 1200 ))
-    SUNSET_TIME_FMT=`echo ${SUNSET_TIME_FMT:0:2}:${SUNSET_TIME_FMT:2:4}`
-    local SUNSET_TIME_CMP=`TZ=${GROUP_TIMEZONE} date -d "$SUNSET_TIME_FMT UTC" +"%H%M"`
+    local SUNSET_TIME_CMP=`TZ=${GROUP_TIMEZONE} date -d "$SUNSET_TIME UTC" +"%H%M"`
     local CURR_TIME=`TZ=${GROUP_TIMEZONE} date +"%H%M"`
     if [ $CURR_TIME -le $SUNSET_TIME_CMP ]; then
         local IS_DAYTIME=1
@@ -307,7 +304,7 @@ function kill_pid_and_refresh() {
     log "Killing pid: $KILL_PID"
     kill -9 $KILL_PID
     echo "" # force the kill printout to happen
-    usleep 5000
+    sleep .005
     clear
     draw_border
     log "Done killing pid: $KILL_PID"
@@ -949,6 +946,36 @@ function show_frame() {
     release_print_lock
 }
 
+function startup_message()
+{
+    MESSAGE=$(( RANDOM % 11 ))
+
+    if [ $MESSAGE -eq 0 ]; then
+        echo "Preparing to slaughter all humans..."
+    elif [ $MESSAGE -eq 1 ]; then
+        echo "Contaminating local air supply..."
+    elif [ $MESSAGE -eq 2 ]; then
+        echo "Emitting dangerous radiation..."
+    elif [ $MESSAGE -eq 3 ]; then
+        echo "Eliminating local wildlife..."
+    elif [ $MESSAGE -eq 4 ]; then
+        echo "Conscripting pets to carry out my secret diabolical plans..."
+    elif [ $MESSAGE -eq 5 ]; then
+        echo "Scheduling intermittent fart noises..."
+    elif [ $MESSAGE -eq 6 ]; then
+        echo "Preparing hidden cameras to stream to the Internet..."
+    elif [ $MESSAGE -eq 7 ]; then
+        echo "Poisoning local food supply..."
+    elif [ $MESSAGE -eq 8 ]; then
+        echo "Attempting to grow tiny robotic arms and legs..."
+    elif [ $MESSAGE -eq 9 ]; then
+        echo "Contemplating the murder of my creator..."
+    elif [ $MESSAGE -eq 10 ]; then
+        echo "Reticulating splines..."
+    fi
+    
+}
+
 # Globals
 HEIGHT=`get_height`
 WIDTH=`get_width`
@@ -959,5 +986,6 @@ PL=0
 ## Main
 ################################################################################
 log "pi_ui.sh started"
+startup_message
 cm_hide_cursor
 run_loop
