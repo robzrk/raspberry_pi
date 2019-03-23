@@ -16,8 +16,13 @@ function connection_message()
     # Line limit:
     #################################################
     echo ""
-    echo "Cannot connect! Check internet connection!"
+    echo "Error connecting to the Internet!"
     echo ""
+    echo "Check Internet connection."
+    echo ""
+    set_color $FG_WHITE $BG_BLACK
+    echo "Guess I'll just sit here "
+    echo " and wait for you..."
 }
 
 #main
