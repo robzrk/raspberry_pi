@@ -42,9 +42,16 @@ done
 
 echo "Waiting for date to be updated ..." >> $LOG_PATH
 DATE_SYNCED=""
+CNT=0
+TO=120
 while [ "$DATE_SYNCED" != "yes" ]; do 
     DATE_SYNCED=`timedatectl | grep sync | awk '{ print $3 }'`
     sleep 1
+    if [ $CNT -eq $TO ]; then
+        log "Failed to sync timedatectl."
+        nohup lxterminal -e $SCRIPTS_DIR/connection_message.sh
+    fi
+    CNT=$(( CNT + 1 ))
 done
 
 echo "Reading the lastest emails ..." >> $LOG_PATH
