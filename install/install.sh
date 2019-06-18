@@ -13,6 +13,7 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update
 sudo apt-get -y install imagemagick
 sudo apt-get -y install terminator
+sudo apt-get -y install pigpio python-pigpio python3-pigpio
 
 sudo pip install imapclient
 sudo pip install email

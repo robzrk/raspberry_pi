@@ -20,5 +20,8 @@ fi
 if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
 fi
+
+sudo pgpiod
+
 lxterminal -e ~/raspberry_pi/scripts/launcher.sh &
 sleep 2
