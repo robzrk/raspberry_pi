@@ -1,6 +1,8 @@
 #!/bin/bash
 
 LOG_PATH=/tmp/pi_ui.log
+MAX_CPU_TEMP_FILE=/tmp/max_cpu_temp
+MAX_GPU_TEMP_FILE=/tmp/max_gpu_temp
 SCRIPTS_DIR=~/raspberry_pi/scripts
 source $SCRIPTS_DIR/cursor_manipulation.sh
 source $SCRIPTS_DIR/colors.sh
@@ -136,6 +138,21 @@ function update_weather() {
     # FORECAST=`curl "http://api.openweathermap.org/data/2.5/forecast?id=5037649&mode=xml&APPID=94bd78ff32b4f3ff159847bc6f2d744a" 2>/dev/null`
     # echo $FORECAST > forecast.xml
     # FORECAST=`cat forecast.xml`
+}
+
+function update_telemetry() {
+    CPU_TEMP=`/opt/vc/bin/vcgencmd measure_temp | sed -e 's/.*=//g;s/\..*//g'`
+    GPU_TEMP=$(($(</sys/class/thermal/thermal_zone0/temp)/1000))
+    MAX_CPU_TEMP=`cat $MAX_CPU_TEMP_FILE`
+    MAX_GPU_TEMP=`cat $MAX_GPU_TEMP_FILE`
+    if [ $CPU_TEMP -gt $MAX_CPU_TEMP ]; then
+	echo $CPU_TEMP > $MAX_CPU_TEMP_FILE
+    fi
+    if [ $GPU_TEMP -gt $MAX_GPU_TEMP ]; then
+	echo $GPU_TEMP > $MAX_GPU_TEMP_FILE
+    fi
+    log "CPU temp: ${CPU_TEMP} (daily high: $MAX_CPU_TEMP)"
+    log "GPU temp: ${GPU_TEMP} (daily high: $MAX_GPU_TEMP)"
 }
 
 function update_sunset() {
@@ -345,6 +362,8 @@ function run_loop() {
                 draw_border
             fi
         fi
+
+	update_telemetry
         
         # Update the weather, but display a connection error if there is one
         update_weather
@@ -957,5 +976,7 @@ PL=0
 ## Main
 ################################################################################
 log "pi_ui.sh started"
+echo 0 > $MAX_CPU_TEMP_FILE
+echo 0 > $MAX_GPU_TEMP_FILE
 cm_hide_cursor
 run_loop
