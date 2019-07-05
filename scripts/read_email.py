@@ -173,6 +173,8 @@ def extract_content_from_email(target_emails, use_text_if_found):
             logging.warn('Could not determine charset')
 
         try:
+            if charset == None:
+                charset = 'utf-8'
             subject = value.decode(charset).encode('utf-8')
         except:
             logging.warn('Could not decode charset %s', charset)
