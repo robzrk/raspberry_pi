@@ -51,4 +51,6 @@ while [ ! -d $LOCKFILE ]; do
     sleep 1
 done
 
+$SCRIPTS_DIR/generate_log_email.sh
+
 exit 0
