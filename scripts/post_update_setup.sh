@@ -6,6 +6,8 @@ function log() {
     echo "`date`: $LOG_MSG" >> $LOG_PATH
 }
 
+sudo apt-get update
+
 which sendmail > /dev/null
 if [ $? -eq 0 ]; then
     log "Nothing to do"
@@ -14,3 +16,26 @@ else
     export DEBIAN_FRONTEND=noninteractive
     sudo apt-get -y install sendmail
 fi
+
+apt list ssmtp | grep ssmtp
+if [ $? -eq 0 ]; then
+    log "Nothing to do"
+else
+    log "Installing ssmtp"
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt-get -y install ssmtp
+fi
+
+apt list mailutils | grep mailutils
+if [ $? -eq 0 ]; then
+    log "Nothing to do"
+else
+    log "Installing mailutils"
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt-get -y install mailutils
+fi
+
+log "Installing ssmtp.conf"
+sudo cp ../install/ssmtp.conf /etc/ssmtp/ssmtp.conf
+
+log "Done!"

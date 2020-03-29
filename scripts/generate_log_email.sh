@@ -24,4 +24,5 @@ for LOG in $LOGS; do
     echo "" >> $LOG_EMAIL
 done
 
-sendmail sendittopi@gmail.com < $LOG_EMAIL
+#sendmail sendittopi@gmail.com < $LOG_EMAIL
+mail -s "`date`: $GROUP log" sendittopi@gmail.com < $LOG_EMAIL
