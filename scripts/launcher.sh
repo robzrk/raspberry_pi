@@ -5,9 +5,6 @@ LOG_PATH=/tmp/launcher.log
 echo "Launcher started" >> $LOG_PATH
 sleep 5
 
-echo "Scheduling debug log..." >> $LOG_PATH
-lxterminal -e "sleep 500; $SCRIPTS_DIR/generate_log_email.sh" &
-
 # Only run this launcher once per boot!
 if [ -f /tmp/launcher_started ]; then
     echo "Launcher was previously started, exiting!">> $LOG_PATH
@@ -17,6 +14,9 @@ else
     echo "first call for this boot" >> $LOG_PATH
     touch /tmp/launcher_started
 fi
+
+echo "Scheduling debug log..." >> $LOG_PATH
+lxterminal -e "sleep 500; $SCRIPTS_DIR/generate_log_email.sh" &
 
 echo "Launching startup_message.sh ..." >> $LOG_PATH
 nohup lxterminal -e $SCRIPTS_DIR/startup_message.sh

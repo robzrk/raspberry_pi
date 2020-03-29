@@ -17,7 +17,7 @@ else
     sudo apt-get -y install sendmail
 fi
 
-apt list ssmtp | grep ssmtp
+apt list ssmtp | grep ssmtp | grep -i installed
 if [ $? -eq 0 ]; then
     log "Nothing to do"
 else
@@ -26,7 +26,7 @@ else
     sudo apt-get -y install ssmtp
 fi
 
-apt list mailutils | grep mailutils
+apt list mailutils | grep mailutils | grep -i installed
 if [ $? -eq 0 ]; then
     log "Nothing to do"
 else
