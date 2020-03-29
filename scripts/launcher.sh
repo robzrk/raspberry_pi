@@ -16,7 +16,7 @@ else
 fi
 
 echo "Scheduling debug log..." >> $LOG_PATH
-lxterminal -e "sleep 500; $SCRIPTS_DIR/generate_log_email.sh" &
+sh -c "sleep 500; $SCRIPTS_DIR/generate_log_email.sh" &
 
 echo "Launching startup_message.sh ..." >> $LOG_PATH
 nohup lxterminal -e $SCRIPTS_DIR/startup_message.sh
