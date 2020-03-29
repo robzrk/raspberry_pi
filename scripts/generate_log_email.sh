@@ -17,7 +17,7 @@ fi
 
 EMAIL=`cat ~/raspberry_pi/etc/email_addr_config.ini | grep $GROUP | head -n 1 | awk '{ print $1 }'`
 
-echo "Subject: Debug log for $EMAIL" > $LOG_EMAIL
+echo "Subject: Debug log for $GROUP" > $LOG_EMAIL
 for LOG in $LOGS; do
     echo "******************************************************" >> $LOG_EMAIL
     echo "**** $LOG ****" >> $LOG_EMAIL
@@ -28,4 +28,6 @@ for LOG in $LOGS; do
 done
 
 #sendmail sendittopi@gmail.com < $LOG_EMAIL
-mail -s "`date`: $GROUP log" sendittopi@gmail.com < $LOG_EMAIL
+mail -s "`date`: $EMAIL log" sendittopi@gmail.com < $LOG_EMAIL
+
+echo "Sent last log at `date`" > /tmp/generate_log_email.log
