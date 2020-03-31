@@ -3,12 +3,10 @@ SCRIPTS_DIR=~/raspberry_pi/scripts
 LOG_PATH=/tmp/launcher.log
 
 echo "Launcher started" >> $LOG_PATH
-sleep 5
 
 # Only run this launcher once per boot!
 if [ -f /tmp/launcher_started ]; then
     echo "Launcher was previously started, exiting!">> $LOG_PATH
-    sleep 1
     exit 1
 else
     echo "first call for this boot" >> $LOG_PATH
@@ -26,8 +24,6 @@ $SCRIPTS_DIR/update_repo.sh | tee -a $LOG_PATH
 
 IPADDR=`ifconfig | grep wlan0 -A 5 | grep inet | grep -v inet6 | awk '{ print $2 }'`
 echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
-
-sleep 1 
 
 echo "Waiting for systemd-timesyncd to start..." >> $LOG_PATH
 RC=-1
