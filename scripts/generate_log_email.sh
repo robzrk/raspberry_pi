@@ -1,4 +1,6 @@
 #!/bin/bash
+LOG_PATH=/tmp/generate_log_email.log
+
 LOG_EMAIL=/tmp/log_email
 LOGS="/tmp/launcher.log
 /tmp/post_update_setup.log
@@ -8,6 +10,9 @@ LOGS="/tmp/launcher.log
 /tmp/read_email.log
 /tmp/pi_ui.log
 /tmp/pi_ui_errors.log
+/tmp/update_repo.log
+/tmp/post_update_setup.log
+/tmp/generate_log_email.log
 "
 
 GROUP=`cat ~/my_group`
@@ -28,6 +33,6 @@ for LOG in $LOGS; do
 done
 
 #sendmail sendittopi@gmail.com < $LOG_EMAIL
-mail -s "`date`: $EMAIL log" sendittopi@gmail.com < $LOG_EMAIL
+mail -s "`date`: $EMAIL log" sendittopi@gmail.com < $LOG_EMAIL | tee -a $LOG_PATH
 
-echo "Sent last log at `date`" > /tmp/generate_log_email.log
+echo "Sent last log at `date`" >> $LOG_PATH

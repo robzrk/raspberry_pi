@@ -19,10 +19,10 @@ echo "Launching startup_message.sh ..." >> $LOG_PATH
 nohup lxterminal -e $SCRIPTS_DIR/startup_message.sh
 
 echo "starting vnc server..."  >> $LOG_PATH
-vncserver :1
+vncserver :1 | tee -a $LOG_PATH
 
 echo "Updating repo..." >> $LOG_PATH
-$SCRIPTS_DIR/update_repo.sh
+$SCRIPTS_DIR/update_repo.sh | tee -a $LOG_PATH
 
 IPADDR=`ifconfig | grep wlan0 -A 5 | grep inet | grep -v inet6 | awk '{ print $2 }'`
 echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
@@ -52,9 +52,9 @@ while [ "$DATE_SYNCED" != "yes" ]; do
 done
 
 echo "Reading the lastest emails ..." >> $LOG_PATH
-$SCRIPTS_DIR/read_email.py
+$SCRIPTS_DIR/read_email.py | tee -a $LOG_PATH
 log "Refreshing background"
-pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo
+pcmanfm --set-wallpaper $SCRIPTS_DIR/daily_photo | tee -a $LOG_PATH
 
 echo "Launching pi_ui ..." >> $LOG_PATH
 nohup lxterminal -e sh -c "$SCRIPTS_DIR/pi_ui.sh 2> /tmp/pi_ui_errors.log"
