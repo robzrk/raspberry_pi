@@ -1,7 +1,7 @@
 #!/bin/bash
 VER_MAJ=1
 VER_MIN=0
-VER_BLD=0
+VER_BLD=1
 LOG_PATH=/tmp/pi_ui.log
 MAX_CPU_TEMP_FILE=/tmp/max_cpu_temp
 MAX_GPU_TEMP_FILE=/tmp/max_gpu_temp
@@ -73,7 +73,7 @@ function draw_border() {
             done
             if [ $LINE -eq $HEIGHT ]; then
 		cm_move_cursor_to_point $LINE 5
-		echo "-${VER_MAJ}.${VER_MIN}.${VER_BLD}-"
+		echo -n "${VER_MAJ}.${VER_MIN}.${VER_BLD}"
 	    fi
         else
             cm_move_cursor_to_point $LINE 0
