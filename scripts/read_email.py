@@ -56,7 +56,7 @@ def read_emails():
     rc = 0
     # Check email, generate daily_text and daily_photo files
     with IMAPClient(host="smtp.gmail.com") as client:
-        client.login('sendittopi', 'IwI9YB!S2P&^')
+        client.login('sendittopi', 'zpxmxexbyshzrysm')
         client.select_folder('INBOX')
 
         # Which emails to search
