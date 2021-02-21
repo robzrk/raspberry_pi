@@ -1,7 +1,7 @@
 #!/bin/bash
 VER_MAJ=1
 VER_MIN=0
-VER_BLD=2
+VER_BLD=3
 LOG_PATH=/tmp/pi_ui.log
 SCRIPTS_DIR=~/raspberry_pi/scripts
 source $SCRIPTS_DIR/cursor_manipulation.sh
