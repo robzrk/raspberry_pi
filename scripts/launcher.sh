@@ -19,9 +19,6 @@ nohup lxterminal -e $SCRIPTS_DIR/startup_message.sh
 echo "starting vnc server..."  >> $LOG_PATH
 vncserver :1 | tee -a $LOG_PATH
 
-echo "Updating repo..." >> $LOG_PATH
-$SCRIPTS_DIR/update_repo.sh | tee -a $LOG_PATH
-
 IPADDR=`ifconfig | grep wlan0 -A 5 | grep inet | grep -v inet6 | awk '{ print $2 }'`
 echo "Started VNC server at ${IPADDR}:1 ..." >> $LOG_PATH
 
@@ -46,6 +43,9 @@ while [ "$DATE_SYNCED" != "yes" ]; do
     fi
     CNT=$(( CNT + 1 ))
 done
+
+echo "Updating repo..." >> $LOG_PATH
+$SCRIPTS_DIR/update_repo.sh | tee -a $LOG_PATH
 
 echo "Reading the lastest emails ..." >> $LOG_PATH
 $SCRIPTS_DIR/read_email.py | tee -a $LOG_PATH
