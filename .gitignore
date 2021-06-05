@@ -1,1 +1,11 @@
 *~
+run/symlinks_for_today/messages/*
+run/symlinks_for_today/photos/*
+run/symlinks_for_today/senders/*
+run/symlinks_for_today/dates/*
+run/messages/*
+run/photos/*
+run/senders/*
+run/dates/*
+run/read_email_progress.txt
+run/emails_downloaded.txt
