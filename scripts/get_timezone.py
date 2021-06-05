@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import email
 import configparser
 import re
@@ -35,7 +35,7 @@ def setup():
 
 def get_timezone():
     group_file = '%s/../../my_group' % _script_dir
-    my_group = subprocess.check_output(['cat', group_file])
+    my_group = subprocess.check_output(['cat', group_file]).decode()
     my_group_parsed = re.sub('[ \n]', '', my_group)
     tz = config['timezones'][my_group_parsed]
     logging.info('tz for %s is %s', my_group_parsed, tz)

@@ -1,4 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/python3
+import threading
+import glob
+import time
+from os import listdir
+from os.path import isfile, join
 import email
 import configparser
 import re
@@ -7,18 +12,40 @@ from dateutil import parser
 import logging
 import subprocess
 import os
+import sys
+import math
 from imapclient import IMAPClient
 from email.header import decode_header
+from PIL import Image, ImageOps
+
 # globals
 _max_text_size = 32768
-_target_photo_height = 450
+_target_photo_height = 480
 _script_dir = os.path.dirname(os.path.realpath(__file__))
-_photo_path = '%s/daily_photo' % _script_dir
-_text_path = '%s/daily_text' % _script_dir
-_sender_path = '%s/daily_text_sender' % _script_dir
+_photo_dir = _script_dir + '/../run/photos'
+_text_dir = _script_dir + '/../run/messages'
+_sender_dir = _script_dir + '/../run/senders'
+_date_dir = _script_dir + '/../run/dates'
+_photo_path = _photo_dir + '/%s'
+_text_path = _text_dir + '/%s'
+_sender_path = _sender_dir + '/%s'
+_date_path = _date_dir + '/%s'
+_today_photo_dir = _script_dir + '/../run/symlinks_for_today/photos'
+_today_text_dir = _script_dir + '/../run/symlinks_for_today/messages'
+_today_sender_dir = _script_dir + '/../run/symlinks_for_today/senders'
+_today_date_dir = _script_dir + '/../run/symlinks_for_today/dates'
+_email_downloaded_path = _script_dir + '/../run/emails_downloaded.txt'
+_today_photo_path = _today_photo_dir + '/%s'
+_today_text_path = _today_text_dir + '/%s'
+_today_sender_path = _today_sender_dir + '/%s'
+_today_date_path = _today_date_dir + '/%s'
+_photo_glob_orig = _photo_dir + '/*_orig'
 _log_path = '/tmp/read_email.log'
 _config_path = '%s/../etc/email_addr_config.ini' % _script_dir
 _dl_email_info_path = '%s/../etc/downloaded_email.ini' % _script_dir
+_progress_path = _script_dir + '/../run/read_email_progress.txt'
+_symlinks_to_create = []
+_default_photo = _script_dir + '/../images/umbrella.png'
 
 def setup():
     global dayofweek
@@ -77,189 +104,337 @@ def read_emails():
         logging.info('Found %d messages', len(response.items()))
 
         # Figure out which messages from today's group to download
-        target_text_uid = 0
-        most_recent_text_date = parser.parse('Mon, 1 Jan 2018 00:00:00 -0600')
-        target_photo_uid = 0
-        most_recent_photo_date = parser.parse('Mon, 1 Jan 2018 00:00:00 -0600')
-        for uid, message_data in response.items():
-            email_msg = email.message_from_string(message_data['BODY[HEADER]'])
-            email_date = parser.parse(email_msg.get('Date'))
-            is_photo = (message_data['RFC822.SIZE'] > _max_text_size)
-            if is_photo:
-                logging.info('Photo email (uid %d) sent %s', uid, email_date)
-                if (most_recent_photo_date < email_date):
-                    logging.info('Most recent photo email now uid %d', uid)
-                    most_recent_photo_date = email_date
-                    target_photo_uid = uid
-            else:
-                logging.info('Text email (uid %d) sent %s', uid, email_date)
-                if (most_recent_text_date < email_date):
-                    logging.info('Most recent text email now uid %d', uid)
-                    most_recent_text_date = email_date
-                    target_text_uid = uid
-
-        logging.info('Selected text email (uid %d) sent %s',
-                     target_text_uid, most_recent_text_date)
-        logging.info('Selected photo email (uid %d) sent %s',
-                     target_photo_uid, most_recent_photo_date)
-
-        dl_email_info = configparser.ConfigParser()
-        dl_email_info.sections()
-        dl_email_info.read(_dl_email_info_path)
-        logging.info('read in dl_email_info: %s', _dl_email_info_path)
-        current_text_uid = int(dl_email_info['email_uids']['text_email'])
-        current_photo_uid = int(dl_email_info['email_uids']['photo_email'])
-        logging.info('ct: %d ini_t: %d cp: %d ini_p: %d', current_text_uid,
-                     target_text_uid, current_photo_uid, target_photo_uid)
-
-        # Download and parse text messages in full
-        if (current_text_uid == target_text_uid):
-            logging.info('Already have current text email...')
-        else: 
-            logging.info('Downloading text email...')
-            try:
-                extract_content_from_email(
-                    client.fetch(target_text_uid, 'RFC822'), True)
-            except:
-                logging.warn('Failed downloading text email!')
-                return
-            # Update config with new uid
-            dl_email_info.set('email_uids', 'text_email',
-                              '%d' % target_text_uid)
-            try:
-                fh = open(_dl_email_info_path, "w+")
-                dl_email_info.write(fh)
-                fh.close()
-            except:
-                logging.warning('Failed to write %s', _dl_email_info_path)
-                
-        # Download and parse text messages in full
-        if (current_photo_uid == target_photo_uid):
-            logging.info('Already have current photo email...')
-        else: 
-            logging.info('Downloading photo email...')
-            try:
-                extract_content_from_email(
-                    client.fetch(target_photo_uid, 'RFC822'),
-                    most_recent_photo_date > most_recent_text_date)
-            except:
-                logging.warn('Failed downloading photo email!')
-                return
-            # Update config with new uid
-            dl_email_info.set('email_uids', 'photo_email',
-                              '%d' % target_photo_uid)
-            try:
-                fh = open(_dl_email_info_path, "w+")
-                dl_email_info.write(fh)
-                fh.close()
-            except:
-                logging.warning('Failed to write %s', _dl_email_info_path)
-            rc = 1
-    return rc
-                
-def extract_content_from_email(target_emails, use_text_if_found):
-    # Parse photo email - should just have one item in photo_email
-    for uid, message_data in target_emails.items():
-        email_message = email.message_from_string(message_data['RFC822'])
-        from_address = re.sub('[<>]', '',
-                              email_message.get('From').split(" ")[-1])
-        display_name = config['email_display_names'][from_address]
-        subject = email_message.get('Subject')
-        try:
-            (value, charset) = decode_header(subject)[0]
-            logging.info('charset: %s', charset)
-            logging.info('value: %s', value)
-        except:
-            logging.warn('Could not determine charset')
-
-        try:
-            if charset == None:
-                charset = 'utf-8'
-            subject = value.decode(charset).encode('utf-8')
-        except:
-            logging.warn('Could not decode charset %s', charset)
-
-        logging.info('Parsing email from: %s', from_address)
-        logging.info('Displaying name: %s', display_name)
-        logging.info('Sent: %s', email_message.get('Date'))
-        logging.info('Subject: %s', subject)
+        uid_list = []
+        downloaded_list = []
+        logging.info('Checking which email is already downloaded...')
+        if isfile(_email_downloaded_path):
+            with open(_email_downloaded_path) as f:
+                downloaded_list = [line.rstrip() for line in f]
         
-        # Generate daily_photo file for this email
-        for part in email_message.walk():
-            if part.get_content_type() == 'image/jpeg' or \
-               part.get_content_type() == 'image/png':
-                write_daily_photo(part.get_payload(decode=True))
+        logging.info('downloaded list: {}'.format(downloaded_list))
+        for uid, message_data in response.items():
+            uid5 = '%05d' % uid
+            _symlinks_to_create.append(uid5)
+            if str(uid) in downloaded_list:
+                continue
 
-        # Generate daily_text file for this email
+            logging.info('Checking if {} is downloaded...'.format(uid))
+            if not email_already_downloaded(uid5):
+                uid_list.append(uid)
+            else:
+                # Update file
+                try:
+                    fh = open(_email_downloaded_path, 'a')
+                    fh.write(str(uid) + '\n')
+                finally:
+                    fh.close()
+
+        logging.info('Create symlinks: {}'.format(_symlinks_to_create))
+        return batch_email_dl(client, uid_list)
+
+def batch_email_dl(client, uid_list):
+    num_emails_per_batch = 4
+    uid_search_expr = ''
+
+    cnt = 0
+    num_batches = math.ceil(len(uid_list)/num_emails_per_batch)
+    for i in range(0, len(uid_list)):
+        uid = uid_list[i]
+        uid_search_expr += str(uid) + ','  #trailing comma is not an issue
+        cnt += 1
+
+        if cnt == num_emails_per_batch or i == len(uid_list)-1:
+            batch_num = math.floor(i/num_emails_per_batch)+1
+            if email_dl(client, uid_search_expr, batch_num, num_batches):
+                return 1
+            uid_search_expr = ''
+            cnt = 0
+    return 0
+        
+def email_dl(client, uid_search_expr, batch_num, num_batches):
+    logging.info('batch %d of %d', batch_num, num_batches)
+
+    # Build up search expression
+    search_expr = []
+    search_expr.append('UID')
+    search_expr.append(uid_search_expr)
+    logging.info('Searching with expression: %s', search_expr)
+
+    # Download email
+    try:
+        messages = client.search(search_expr)
+        response = client.fetch(messages, ['RFC822'])
+    except:
+        logging.warning('Exception while searching email!')
+        logging.warning(sys.exc_info()[0])
+        return 1
+
+    logging.info('Found %d messages', len(response.items()))
+
+    threads = []
+    for uid, message_data in response.items():
+        logging.info('uid: {}'.format(uid))
+        # extract_content_from_email(message_data, uid, True)
+        try:
+            x = threading.Thread(target=extract_content_from_email,
+                                 args=(message_data, uid, True,))
+            threads.append(x)
+            x.start()
+        except:
+            logging.warning('Failed downloading text email! {}')
+            logging.warning(sys.exc_info()[0])
+
+    for x in threads:
+        x.join()
+
+    # Update file
+    try:
+        fh = open(_email_downloaded_path, 'a')
+        for uid, message_data in response.items():
+            fh.write(str(uid) + '\n')
+    finally:
+        fh.close()
+
+    update_progress(batch_num, num_batches, 50, 0)
+    return 0
+                
+def email_already_downloaded(uid5):
+    files = [f for f in listdir(_sender_dir) if isfile(join(_sender_dir, f))]
+    return str(uid5) in files
+
+def extract_content_from_email(message_data, uid, use_text_if_found):
+    uid5 = '%05d' % uid
+    email_message = email.message_from_string(message_data[b'RFC822'].decode())
+    from_address = re.sub('[<>]', '',
+                          email_message.get('From').split(" ")[-1])
+    display_name = config['email_display_names'][from_address]
+    subject = email_message.get('Subject')
+    email_date = email_message.get('Date')
+    try:
+        (value, charset) = decode_header(subject)[0]
+        logging.info('charset: %s', charset)
+        logging.info('value: %s', value)
+    except:
+        logging.warning('Could not determine charset')
+        charset = 'utf-8'
+
+    try:
+        if charset == None:
+            charset = 'utf-8'
+        subject = value.decode(charset)
+    except:
+        logging.warning('Could not decode charset %s', charset)
+
+    logging.info('Parsing email from: %s', from_address)
+    logging.info('Displaying name: %s', display_name)
+    logging.info('Sent: %s', email_date)
+    logging.info('Subject: %s', subject)
+        
+    # Generate daily_photo file for this email
+    for part in email_message.walk():
+        if part.get_content_type() == 'image/jpeg' or \
+          part.get_content_type() == 'image/png':
+            write_daily_photo(part.get_payload(decode=True), uid5)
+
+    # Generate daily_text file for this email
+    try:
         if use_text_if_found and subject != '':
-            write_daily_text(subject, display_name)
+            write_daily_text(subject, display_name, email_date, uid5)
+        else:
+            write_daily_text('no message', display_name, email_date, uid5)
+    except:
+        path = _sender_path % uid5
+        fh = open(path, 'w')
+        fh.write('failed')
+        fh.close()
 
-def write_daily_photo(message_payload):
+def update_progress(complete, total, section_percentage, offset):
+    percent_complete = int((complete/total)*section_percentage + offset)
+    fh = open(_progress_path, 'w')
+    logging.info('{}/{} of {}% + {}% => {}%'.format(complete, total,
+                                             section_percentage, offset,
+                                             percent_complete))
+    fh.write('{}%'.format(percent_complete))
+    fh.close()
+
+def write_daily_photo(message_payload, uid5):
     logging.info(' ** Found photo!')
     try:
-        fh = open(_photo_path, 'wb')
+        path = _photo_path % uid5 + '_orig'
+        logging.info(' ** Writing {}'.format(path))
+        fh = open(path, 'wb')
         fh.write(message_payload)
-        fh.close();
+        fh.close()
     except:
-        logging.warning('Failed to write %s', _photo_path)
+        logging.warning('Failed to write %s', path)
 
-def write_daily_text(message_text, display_name):
+def write_daily_text(message_text, display_name, email_date, uid5):
     message_text_parsed = re.sub('[ \n]', '', message_text)
     message_text_nl_out = re.sub('[\n\r]', ' ', message_text)
     if len(message_text_parsed) > 1:
         logging.info(' ** Found message text!')
         logging.info(message_text_nl_out)
         try:
-            fh = open(_sender_path, 'wb')
+            path = _sender_path % uid5
+            fh = open(path, 'w')
             fh.write('%s' % display_name)
-            fh.close();
+            fh.close()
         except:
-            logging.warning('Failed to write %s', _sender_path)
+            logging.warning('Failed to write %s', path)
         try:
-            fh = open(_text_path, 'wb')
-            fh.write('%s' % message_text_nl_out)
-            fh.close();
+            path = _text_path % uid5
+            fh = open(path, 'w')
+            if message_text_nl_out == 'no message':
+                fh.write('')
+            else:
+                fh.write('%s' % message_text_nl_out)
+            fh.close()
         except:
-            logging.warning('Failed to write %s', _text_path)
-            
+            logging.warning('Failed to write %s', path)
+
+        try:
+            path = _date_path % uid5
+            fh = open(path, 'w')
+            fh.write('%s' % email_date)
+            fh.close()
+        except:
+            logging.warning('Failed to write %s', path)
+
+def remove_symlinks():
+    files = glob.glob(_today_photo_dir + '/*')
+    for f in files:
+        os.remove(f)
+
+    files = glob.glob(_today_text_dir + '/*')
+    for f in files:
+        os.remove(f)
+
+    files = glob.glob(_today_date_dir + '/*')
+    for f in files:
+        os.remove(f)
+
+    files = glob.glob(_today_sender_dir + '/*')
+    for f in files:
+        os.remove(f)
+
+def create_symlinks():
+    i = 0
+    _symlinks_to_create.sort()
+    for uid5 in _symlinks_to_create:
+        create_symlink(uid5, i)
+        i += 1
+    
+def create_symlink(uid5, i):
+    logging.info('Creating symlink for {}'.format(uid5))
+    src_path = _photo_path % uid5
+    dst_path = _today_photo_path % uid5
+    if os.path.isfile(src_path):
+        try:
+            os.symlink(src_path, dst_path)
+            logging.info('Linked {} to {}'.format(src_path, dst_path))
+        except:
+            pass
+    else:
+        alt_idx = i-1
+        logging.info('search idx is {}, uid: {}'.format(alt_idx, _symlinks_to_create[alt_idx]))
+        if alt_idx < 0:
+            logging.error('No image for {}'.format(uid5))
+            os.symlink(_default_photo, dst_path)
+            alt_idx = len(_symlinks_to_create) # to skip while loop
+        while alt_idx < len(_symlinks_to_create):
+            alt_uid5 = _symlinks_to_create[alt_idx]
+            alt_src_path = _photo_path % alt_uid5
+            if os.path.isfile(alt_src_path): 
+                try:
+                    os.symlink(alt_src_path, dst_path)
+                    logging.info('Linked {} to {}'.format(alt_src_path,
+                                                          dst_path))
+                except:
+                    logging.error('Failed to link {} to {}'.format(alt_uid5,
+                                                                   uid5))
+                    pass
+                break
+            alt_idx -= 1
+            logging.info('search idx is {}, uid: {}'.format(alt_idx, _symlinks_to_create[alt_idx]))
+
+    src_path = _text_path % uid5
+    dst_path = _today_text_path % uid5
+    try:
+        os.symlink(src_path, dst_path)
+    except:
+        pass
+
+    src_path = _date_path % uid5
+    dst_path = _today_date_path % uid5
+    try:
+        os.symlink(src_path, dst_path)
+    except:
+        pass
+
+    src_path = _sender_path % uid5
+    dst_path = _today_sender_path % uid5
+    try:
+        os.symlink(src_path, dst_path)
+    except:
+        pass
+
+def resize_photos():
+    threads = []
+    files = glob.glob(_photo_glob_orig)
+    max_threads = 4
+    running_threads = 0
+    i = 0
+
+    for photo_path in files:
+        try:
+            x = threading.Thread(target=resize_photo,
+                                 args=(join(_photo_dir, photo_path),))
+            threads.append(x)
+            x.start()
+        except:
+            logging.error('Failed to start resize photo thread for {}'.format(photo_path))
+            pass
+
+        running_threads += 1
+        if running_threads >= max_threads:
+            for x in threads:
+                x.join()
+                i += 1
+                update_progress(i, len(files), 49, 50)
+            threads.clear()
+            running_threads = 0
+
+    # Join any remaining threads
+    for x in threads:
+        x.join()
+        i += 1
+        update_progress(i, len(files), 49, 50)
+
 # Read in photo height and scale it down, in place, to target height
-def resize_photo(new_emails):
-    logging.info('Resizing photo...')
-    photo_height = int(subprocess.check_output(['convert', _photo_path,
-                                            '-print', '%h', '/dev/null']))
+def resize_photo(photo_path):
+    logging.info('Resizing photo: {}'.format(photo_path))
+
+    im1 = Image.open(photo_path)
+    ImageOps.exif_transpose(im1).convert('RGB').save(photo_path, 'jpeg')
+    
+    photo_height = int(subprocess.check_output(['convert', photo_path,
+                                                '-print', '%h', '/dev/null']).decode())
     logging.info('Original photo height: %d', photo_height)
     scale_percentage = '%d%%' % (_target_photo_height * 100 / photo_height)
-    if ((new_emails == 1) and (scale_percentage != "100%")):
+    if (scale_percentage != "100%"):
         logging.info('Scaling photo to %s of its original size',
                      scale_percentage)
-        orientation = subprocess.check_output(['identify', '-format', '\'%[EXIF:orientation]\'', _photo_path])
-        logging.info('Orientation is %s', orientation)
-        # TopLeft  - 1
-        # LeftTop  - 5
-        if (orientation == "'1'") or (orientation == "'5'"):
-            rotation = '0'
-        # TopRight  - 2
-        # RightTop  - 6
-        elif (orientation == "'2'") or (orientation == "'6'"):
-            rotation = '90'
-        # BottomRight  - 3
-        # RightBottom  - 7
-        elif (orientation == "'3'") or (orientation == "'7'"):
-            rotation = '180'
-        # BottomLeft  - 4
-        # LeftBottom  - 8
-        elif (orientation == "'4'") or (orientation == "'8'"):
-            rotation = '270'
-        else:
-            rotation = '0'
-
-        logging.info('Changing rotation to %s', rotation)
-        photo_size = subprocess.check_output(['mogrify',
-                                              '-resize', scale_percentage,
-                                              '-rotate', rotation,
-                                              _photo_path])
+        subprocess.call(['mogrify',
+                         '-resize', scale_percentage,
+                         photo_path])
     else:
         logging.info('Photo does not need scaling')
+
+    try:
+        new_path = photo_path.replace('_orig', '')
+        os.rename(photo_path, new_path)
+    except:
+        pass
 
 def teardown():
     logging.info('****************************************')
@@ -269,6 +444,12 @@ def teardown():
 
 # main
 setup()
-new_emails = read_emails()
-resize_photo(new_emails)
+update_progress(0, 1, 0, 0) # to 0%
+remove_symlinks()
+rc = read_emails()
+resize_photos()
+create_symlinks()
+if rc == 0:
+    update_progress(1, 1, 99, 0) # to 99%
 teardown()
+sys.exit(rc)
