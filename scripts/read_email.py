@@ -151,8 +151,6 @@ def batch_email_dl(client, uid_list):
         
 def email_dl(client, uid_search_expr, batch_num, num_batches):
     logging.info('batch %d of %d', batch_num, num_batches)
-    progress_slice = math.floor(25 / num_batches)
-    progress_made = batch_num * progress_slice
 
     # Build up search expression
     search_expr = []
@@ -170,9 +168,7 @@ def email_dl(client, uid_search_expr, batch_num, num_batches):
         return 1
 
     logging.info('Found %d messages', len(response.items()))
-    update_progress(batch_num, num_batches, progress_slice/2, progress_made)
 
-    i = 0
     threads = []
     for uid, message_data in response.items():
         logging.info('uid: {}'.format(uid))
@@ -188,9 +184,6 @@ def email_dl(client, uid_search_expr, batch_num, num_batches):
 
     for x in threads:
         x.join()
-        i += 1
-        update_progress(i, len(response.items()), (progress_slice/2)+1,
-                        progress_made+progress_slice/2)
 
     # Update file
     try:
@@ -200,6 +193,7 @@ def email_dl(client, uid_search_expr, batch_num, num_batches):
     finally:
         fh.close()
 
+    update_progress(batch_num, num_batches, 50, 0)
     return 0
                 
 def email_already_downloaded(uid5):
