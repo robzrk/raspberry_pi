@@ -319,6 +319,7 @@ def remove_symlinks():
 
 def create_symlinks():
     i = 0
+    _symlinks_to_create.sort()
     for uid5 in _symlinks_to_create:
         create_symlink(uid5, i)
         i += 1
