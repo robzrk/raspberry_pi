@@ -45,6 +45,7 @@ _config_path = '%s/../etc/email_addr_config.ini' % _script_dir
 _dl_email_info_path = '%s/../etc/downloaded_email.ini' % _script_dir
 _progress_path = _script_dir + '/../run/read_email_progress.txt'
 _symlinks_to_create = []
+_default_photo = _script_dir + '/../images/umbrella.png'
 
 def setup():
     global dayofweek
@@ -128,6 +129,7 @@ def read_emails():
                 finally:
                     fh.close()
 
+        logging.info('Create symlinks: {}'.format(_symlinks_to_create))
         return batch_email_dl(client, uid_list)
 
 def batch_email_dl(client, uid_list):
@@ -322,26 +324,37 @@ def create_symlinks():
         i += 1
     
 def create_symlink(uid5, i):
+    logging.info('Creating symlink for {}'.format(uid5))
     src_path = _photo_path % uid5
     dst_path = _today_photo_path % uid5
     if os.path.isfile(src_path):
         try:
             os.symlink(src_path, dst_path)
+            logging.info('Linked {} to {}'.format(src_path, dst_path))
         except:
             pass
     else:
-        alt_idx = i+1
+        alt_idx = i-1
+        logging.info('search idx is {}, uid: {}'.format(alt_idx, _symlinks_to_create[alt_idx]))
+        if alt_idx < 0:
+            logging.error('No image for {}'.format(uid5))
+            os.symlink(_default_photo, dst_path)
+            alt_idx = len(_symlinks_to_create) # to skip while loop
         while alt_idx < len(_symlinks_to_create):
-            alt_uid = _symlinks_to_create[alt_idx]
-            alt_uid5 = '%05d' % int(alt_uid)
+            alt_uid5 = _symlinks_to_create[alt_idx]
             alt_src_path = _photo_path % alt_uid5
             if os.path.isfile(alt_src_path): 
                 try:
                     os.symlink(alt_src_path, dst_path)
+                    logging.info('Linked {} to {}'.format(alt_src_path,
+                                                          dst_path))
                 except:
+                    logging.error('Failed to link {} to {}'.format(alt_uid5,
+                                                                   uid5))
                     pass
                 break
-            alt_idx += 1
+            alt_idx -= 1
+            logging.info('search idx is {}, uid: {}'.format(alt_idx, _symlinks_to_create[alt_idx]))
 
     src_path = _text_path % uid5
     dst_path = _today_text_path % uid5
@@ -378,6 +391,7 @@ def resize_photos():
             threads.append(x)
             x.start()
         except:
+            logging.error('Failed to start resize photo thread for {}'.format(photo_path))
             pass
 
         running_threads += 1
@@ -385,9 +399,15 @@ def resize_photos():
             for x in threads:
                 x.join()
                 i += 1
-                update_progress(i, len(files), 50, 50)
+                update_progress(i, len(files), 49, 50)
             threads.clear()
             running_threads = 0
+
+    # Join any remaining threads
+    for x in threads:
+        x.join()
+        i += 1
+        update_progress(i, len(files), 49, 50)
 
 # Read in photo height and scale it down, in place, to target height
 def resize_photo(photo_path):
@@ -426,9 +446,9 @@ setup()
 update_progress(0, 1, 0, 0) # to 0%
 remove_symlinks()
 rc = read_emails()
-create_symlinks()
 resize_photos()
-teardown()
+create_symlinks()
 if rc == 0:
     update_progress(1, 1, 99, 0) # to 99%
+teardown()
 sys.exit(rc)
