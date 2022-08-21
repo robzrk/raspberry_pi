@@ -162,7 +162,7 @@ def read_email():
     finally:
         _email_mutex.release()
 
-    logging.info('(re)read email')
+    logging.info('(re)read email finished with rc {}'.format(rc))
     return rc
 
 def read_date():
@@ -213,10 +213,14 @@ def read_weather_text():
 
     now = datetime.now().strftime("%H:%M")
     cmp_now = datetime.strptime(now, '%H:%M')
-    cmp_sunset = datetime.strptime(_group_sunset, '%H:%M')
-    if (cmp_now < cmp_sunset):
-        is_day = 1
-    else:
+    try:
+        cmp_sunset = datetime.strptime(_group_sunset, '%H:%M')
+        if (cmp_now < cmp_sunset):
+            is_day = 1
+        else:
+            is_day = 0
+    except:
+        logging.warning('Sunset conversion exception!')
         is_day = 0
 
     _weather_image_mutex.acquire()
